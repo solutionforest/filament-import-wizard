@@ -16,7 +16,9 @@ class StaffPanelProvider extends PanelProvider
                 ->disk('imports')
                 ->directory('staff-imports')
                 ->chunkSize(7)
-                ->maxCollectedErrors(2),
+                ->maxCollectedErrors(2)
+                ->requireApproval()
+                ->chunkedUploads(),
         );
     }
 }

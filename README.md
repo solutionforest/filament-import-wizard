@@ -11,12 +11,16 @@ any size through Filament's own queued importer. It is built on Filament's `Impo
 | 1 · Upload | 2 · Map |
 | --- | --- |
 | ![Upload](docs/1-upload.png) | ![Map](docs/2-map.png) |
-| **3 · Review** | **4 · Import** |
-| ![Review](docs/3-review.png) | ![Import](docs/4-import.png) |
+| **3 · Review** | **4 · Submitted for approval** |
+| ![Review](docs/3-review.png) | ![Approval](docs/4-approval.png) |
+| **Audit trail + approve / reject** | **History of one import** |
+| ![Audit](docs/5-audit-pending.png) | ![History](docs/6-audit-history.png) |
 
 ## Features
 
 - **CSV, XLSX, XLSM, ODS and XLS** – spreadsheets are streamed into a UTF-8 CSV (OpenSpout, constant memory); legacy `.xls` uses PhpSpreadsheet when installed. Multi-sheet workbooks ask which sheet to import. CSV in UTF-16 / Windows-1252 is transcoded automatically; the delimiter is auto-detected.
+- **Audit flow** – every run is recorded (who, which file + SHA-256, mapping, review result, outcome) with an immutable event trail, and imports can optionally be held for a second person's approval (maker–checker). See *Audit & approval*.
+- **Huge files, no browser limit** – never loaded into memory, and uploads are sent in small resumable chunks straight to the disk, so PHP's `upload_max_filesize` / `post_max_size` no longer cap the file size. See *Chunked uploads*.
 - **Huge files** – never loaded into memory. The file is addressed by byte offset, validated in polled slices and imported by one queued job per slice (`ImportCsvSlice`, a thin subclass of Filament's `ImportCsv`) whose payload is just an offset and a row count. For files too big for a browser upload there is a console command (below).
 - **Cross-check before the import starts** – Review dry-runs the importer's own *remap → cast → validate* pipeline over **every** row (nothing is saved) plus optional file-level checks such as duplicates, with live progress and the failing rows. Import unlocks when the check has finished.
 - **Reusable rules** – rules live in their own classes and rule sets instead of being re-typed in every importer (see below).
@@ -123,6 +127,65 @@ files. Implement `Checks\RowCheck` for your own checks. Note that file-level che
 the queued import runs slices in parallel and applies your importer's `resolveRecord()` (so a duplicate row will
 update the earlier one) — fix the file if that is not what you want.
 
+### Chunked uploads (no PHP size limit)
+
+Livewire's normal upload is bounded by `upload_max_filesize` / `post_max_size`. Turn on chunked uploads and the
+browser slices the file and POSTs each slice (sized to fit your PHP limits) straight to the panel's disk:
+
+```php
+ImportWizardPlugin::make()->pages([ImportContacts::class])->chunkedUploads()->maxUploadSize(20 * 1024 * 1024) // 20 GB, in KB
+```
+
+- Resumable per chunk (3 retries), progress bar, drag & drop. A 16 MB file went through a default `php -S` (2 MB / 8 MB limits) in 10 chunks.
+- All state — a manifest and one object per chunk — lives **on the disk**, not in the session or local storage, so with a shared disk any web server can take any chunk and assemble the file.
+- Endpoints are authenticated panel routes (`/{panel}/import-wizard/upload/{start,chunk,complete}`); uploads belong to the user who started them; only csv/txt/xlsx/xlsm/ods/xls are accepted; the size cap is enforced when the upload starts.
+- Joining the chunks needs temporary local disk space equal to the file size (`sys_get_temp_dir()`) and a request that can run long enough to copy it — raise `max_execution_time` for that request if you upload many GB.
+- Clean up abandoned uploads: `php artisan import-wizard:prune-uploads` (schedule it daily, `->onOneServer()`).
+
+### Audit & approval
+
+Auditing is **on by default** (migrations are auto-loaded; run `php artisan migrate`). Each run gets an
+`import_wizard_audits` row — user, panel, importer, file name, **SHA-256 of the uploaded file**, IP, mapping, options,
+row counts, review summary, the resulting Filament `Import`, imported / failed counts — plus an append-only
+`import_wizard_audit_events` trail (`uploaded → reviewed → [pending_approval → approved|rejected] → importing → completed[_with_failures]`).
+The **Import audit** page (registered automatically on the panel) lists them with filters and a History modal.
+Every transition also fires `ImportAuditStatusChanged`, so you can forward it to your activity log / SIEM / chat:
+
+```php
+Event::listen(ImportAuditStatusChanged::class, fn ($e) => Log::channel('audit')->info('import', [
+    'audit' => $e->audit->id, 'from' => $e->from?->value, 'to' => $e->to->value, 'actor' => $e->actorId,
+]));
+```
+
+Require a second person to approve (maker–checker) — always, or by rule:
+
+```php
+ImportWizardPlugin::make()
+    ->requireApproval(fn (ImportAudit $audit) => $audit->total_rows > 1000)   // or ->requireApproval()
+    ->canApproveUsing(fn (User $user, ImportAudit $audit) => $user->hasRole('import-approver'))
+    ->canViewAllAuditsUsing(fn (User $user) => $user->hasRole('auditor'))      // others see their own
+    ->allowSelfApproval(false);                                                // default: the uploader cannot approve
+```
+
+With approval on, the last wizard button becomes **Submit for approval**: the file is reviewed but nothing is
+written. An approver opens *Import audit* and approves (the import then runs **as the original uploader**, so their
+completion notification and failed-rows download stay theirs) or rejects with a reason. Without closures, approval
+follows the `approve-imports` Gate ability and viewing follows `view-all-import-audits` when you define them, else any panel user.
+Disable everything with `->audit(false)`.
+
+### Running on several servers
+
+| Concern | What to do |
+| --- | --- |
+| Where files live | Use a **shared disk** (S3, NFS…) for `->disk()` — uploads, converted CSVs and chunks must be readable by every web server *and* every queue worker. A `local` disk only works on one machine. |
+| Browser upload | Enable `->chunkedUploads()`. Chunk state is on the disk, so a load balancer may send each chunk to a different server. (Livewire's own temporary upload would need `livewire.temporary_file_upload.disk` on shared storage.) |
+| Review state | Set `IMPORT_WIZARD_SEEN_STORE=database` (config `import-wizard.seen_store`) so `UniqueInFile` keeps its seen-set in the shared database; the default `sqlite` file is local to one server. Run `php artisan migrate`. |
+| Queue | A real queue (`redis`, `database`, `sqs`) with workers anywhere that can reach the same disk and database; the `job_batches` table; a shared cache store (Redis) for Filament's job overlap locks. |
+| Sessions | A shared session driver (database / Redis) as for any load-balanced Laravel app. |
+| Audit | Lives in the database, so it is central. |
+| Housekeeping | Schedule `import-wizard:prune-uploads` on one server (`->onOneServer()`). |
+| Console import | `import-wizard:run` can run on any server that sees the disk. |
+
 ### Very large files: console import
 
 A browser upload is bounded by PHP / Livewire limits. For multi-GB files put the file on a disk (scp, rsync, a
@@ -154,7 +217,9 @@ composer serve          # http://127.0.0.1:8765/admin  (auto-signed-in demo user
 ```
 
 Open **Import contacts** and upload `workbench/samples/contacts.xlsx` (or `contacts.csv`). The sample has 4 problems
-that Review catches: two malformed e-mails, one missing name and one duplicate e-mail. The demo importer
+that Review catches: two malformed e-mails, one missing name and one duplicate e-mail. The demo uses chunked uploads and
+requires approval above 20 rows (self-approval allowed, since the demo has one user), so you can click through
+upload → review → *Submit for approval* → **Import audit** → Approve. The demo importer
 (`workbench/app/Filament/Imports`) uses `CommonRules` and the page uses `UniqueInFile`.
 
 > The demo signs a user in automatically (`workbench/app/Http/DemoLogin.php`) — demo only, never copy that.
@@ -162,7 +227,7 @@ that Review catches: two malformed e-mails, one missing name and one duplicate e
 ## Known limits
 
 - Excel: one sheet per import. Cell values are read as displayed values; dates become `Y-m-d H:i:s`. `.xls` is loaded fully into memory by PhpSpreadsheet, so keep such files modest (use `.xlsx` for big files).
-- Browser uploads are bounded by your PHP / Livewire limits (`upload_max_filesize`, `post_max_size`, `livewire.temporary_file_upload`) — use the console command beyond that.
+- The standard (non-chunked) browser upload is bounded by PHP / Livewire limits — enable `->chunkedUploads()` or use the console command. Chunk assembly needs local temp space equal to the file size.
 - Review validates against the importer's rules and your `RowCheck`s; `resolveRecord()`, hooks and database writes happen in the real import.
 - Filament imports do not run per-record policy checks – authorize inside your importer if you need to.
 

@@ -12,6 +12,7 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
@@ -22,8 +23,10 @@ use Livewire\Attributes\Locked;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use LogicException;
 use RuntimeException;
+use SolutionForest\FilamentImportWizard\Audit\AuditRecorder;
 use SolutionForest\FilamentImportWizard\Checks\RowCheck;
 use SolutionForest\FilamentImportWizard\ImportWizardPlugin;
+use SolutionForest\FilamentImportWizard\Models\ImportAudit;
 use SolutionForest\FilamentImportWizard\Support\ColumnMapper;
 use SolutionForest\FilamentImportWizard\Support\CsvSource;
 use SolutionForest\FilamentImportWizard\Support\FileNormalizer;
@@ -128,6 +131,14 @@ abstract class ImportWizardPage extends Page
     #[Locked]
     public ?int $importId = null;
 
+    /** The audit record of this run (null when auditing is switched off). */
+    #[Locked]
+    public ?int $auditId = null;
+
+    /** True once the run was handed to an approver instead of being imported. */
+    #[Locked]
+    public bool $awaitingApproval = false;
+
     /**
      * @return class-string<Importer>
      */
@@ -207,25 +218,7 @@ abstract class ImportWizardPage extends Page
                 Section::make()
                     ->visible(fn (): bool => $this->step === self::STEP_UPLOAD)
                     ->schema([
-                        FileUpload::make('file')
-                            ->label(__('filament-import-wizard::import.upload.label'))
-                            ->helperText(__('filament-import-wizard::import.upload.helper'))
-                            ->disk($this->getUploadDisk())
-                            ->directory($this->getUploadDirectory())
-                            ->acceptedFileTypes($this->getAcceptedFileTypes())
-                            ->maxSize($this->getMaxUploadSizeInKilobytes())
-                            ->required()
-                            ->afterStateUpdated(function (FileUpload $component): void {
-                                // Store the upload right away (FileUpload normally only does so on
-                                // submit). Saving re-fires this hook with the stored path.
-                                if (collect((array) $component->getRawState())->contains(fn (mixed $file): bool => $file instanceof TemporaryUploadedFile)) {
-                                    $component->saveUploadedFiles();
-
-                                    return;
-                                }
-
-                                $this->analyzeUpload();
-                            }),
+                        $this->getUploadComponent(),
                         Select::make('sheet')
                             ->label(__('filament-import-wizard::import.upload.sheet'))
                             ->options(fn (): array => $this->sheets)
@@ -250,6 +243,34 @@ abstract class ImportWizardPage extends Page
                 View::make('filament-import-wizard::steps.import')
                     ->visible(fn (): bool => $this->step === self::STEP_IMPORT),
             ]);
+    }
+
+    protected function getUploadComponent(): Component
+    {
+        if ($this->getPlugin()->usesChunkedUploads()) {
+            return View::make('filament-import-wizard::steps.chunked-upload');
+        }
+
+        return FileUpload::make('file')
+            ->label(__('filament-import-wizard::import.upload.label'))
+            ->helperText(__('filament-import-wizard::import.upload.helper'))
+            ->disk($this->getUploadDisk())
+            ->directory($this->getUploadDirectory())
+            ->acceptedFileTypes($this->getAcceptedFileTypes())
+            ->maxSize($this->getMaxUploadSizeInKilobytes())
+            ->storeFileNamesIn('uploadedFileName')
+            ->required()
+            ->afterStateUpdated(function (FileUpload $component): void {
+                // Store the upload right away (FileUpload normally only does so on
+                // submit). Saving re-fires this hook with the stored path.
+                if (collect((array) $component->getRawState())->contains(fn (mixed $file): bool => $file instanceof TemporaryUploadedFile)) {
+                    $component->saveUploadedFiles();
+
+                    return;
+                }
+
+                $this->analyzeUpload();
+            });
     }
 
     /**
@@ -279,12 +300,49 @@ abstract class ImportWizardPage extends Page
 
         // The state is client-controllable: only accept paths inside our own
         // upload directory, never arbitrary files on the disk.
-        if (! is_string($path) || ! str_starts_with($path, trim($this->getUploadDirectory(), '/').'/') || str_contains($path, '..')) {
+        if (is_string($path)) {
+            $this->acceptUpload($path);
+        }
+    }
+
+    /**
+     * Called by the chunked uploader once the browser has sent every chunk and
+     * the server has joined them.
+     */
+    public function chunkedUploadFinished(string $path): void
+    {
+        if ($this->getPlugin()->usesChunkedUploads()) {
+            $this->acceptUpload($path);
+        }
+    }
+
+    /**
+     * @return array{start: string, chunk: string, complete: string}
+     */
+    public function getChunkedUploadUrls(): array
+    {
+        $panel = Filament::getCurrentOrDefaultPanel();
+
+        return [
+            'start' => $panel?->route('import-wizard.upload.start') ?? '',
+            'chunk' => $panel?->route('import-wizard.upload.chunk') ?? '',
+            'complete' => $panel?->route('import-wizard.upload.complete') ?? '',
+        ];
+    }
+
+    protected function acceptUpload(string $path): void
+    {
+        // Never reach into the chunk work area or climb out of the upload directory.
+        if (! str_starts_with($path, trim($this->getUploadDirectory(), '/').'/') || str_contains($path, '..') || str_contains($path, '/.')) {
             return;
         }
 
         $this->uploadPath = $path;
-        $this->fileName = basename($path);
+        // Chunked uploads are stored as "{id}-{name}"; FileUpload keeps the original name next to the path.
+        $original = $this->data['uploadedFileName'] ?? null;
+        $this->fileName = is_string($original) && $original !== ''
+            ? mb_substr(basename($original), 0, 255)
+            : (string) preg_replace('/^[a-f0-9]{32}-/', '', basename($path));
 
         try {
             $this->sheets = (new FileNormalizer)->sheets($this->getUploadDisk(), $path);
@@ -345,6 +403,8 @@ abstract class ImportWizardPage extends Page
 
         $this->data['columnMap'] = (new ColumnMapper)->guess($this->getImportColumns(), $this->headers);
         $this->step = self::STEP_MAP;
+
+        $this->startAudit();
     }
 
     /**
@@ -441,6 +501,15 @@ abstract class ImportWizardPage extends Page
 
         if ($this->reviewFinished) {
             $validator->finish($this->reviewToken);
+
+            $audit = $this->getAudit();
+
+            if ($audit instanceof ImportAudit) {
+                app(AuditRecorder::class)->reviewed($audit, $this->getColumnMap(), $this->getImporterOptions(), $this->totalRows, $this->invalidRows, [
+                    'errors_by_column' => $this->errorsByColumn,
+                    'sample' => $this->errorRows,
+                ]);
+            }
         }
     }
 
@@ -453,6 +522,18 @@ abstract class ImportWizardPage extends Page
             return;
         }
 
+        $audit = $this->getAudit();
+        $recorder = app(AuditRecorder::class);
+
+        if ($audit instanceof ImportAudit && $this->getPlugin()->requiresApproval($audit)) {
+            $recorder->submitted($audit, Filament::auth()->user());
+
+            $this->awaitingApproval = true;
+            $this->step = self::STEP_IMPORT;
+
+            return;
+        }
+
         $import = (new ImportStarter)->start(
             source: $this->source(),
             importer: static::getImporter(),
@@ -462,11 +543,57 @@ abstract class ImportWizardPage extends Page
             chunkSize: $this->getChunkSize(),
             user: Filament::auth()->user(),
             authGuard: Filament::getAuthGuard(),
+            onCreated: $audit instanceof ImportAudit ? fn (Import $import) => $recorder->started($audit, $import, Filament::auth()->user()) : null,
         );
 
         $key = $import->getKey();
         $this->importId = is_int($key) ? $key : null;
         $this->step = self::STEP_IMPORT;
+    }
+
+    /**
+     * One audit per uploaded file: re-analysing the same upload reuses it.
+     */
+    protected function startAudit(): void
+    {
+        if (! $this->getPlugin()->isAuditEnabled()) {
+            $this->auditId = null;
+
+            return;
+        }
+
+        $existing = $this->getAudit();
+
+        if ($existing instanceof ImportAudit && $existing->upload_path === $this->uploadPath) {
+            return;
+        }
+
+        $this->auditId = app(AuditRecorder::class)->uploaded(
+            Filament::getCurrentOrDefaultPanel()?->getId(),
+            Filament::auth()->user(),
+            static::getImporter(),
+            $this->fileName,
+            $this->getUploadDisk(),
+            $this->uploadPath,
+            $this->filePath,
+            $this->delimiter,
+            request()->ip(),
+        )->id;
+    }
+
+    public function getAudit(): ?ImportAudit
+    {
+        return $this->auditId === null ? null : ImportAudit::query()->find($this->auditId);
+    }
+
+    /**
+     * Whether finishing this run hands it to an approver instead of importing.
+     */
+    public function needsApproval(): bool
+    {
+        $audit = $this->getAudit();
+
+        return $audit instanceof ImportAudit && $this->getPlugin()->requiresApproval($audit);
     }
 
     public function getImport(): ?Import
@@ -482,7 +609,7 @@ abstract class ImportWizardPage extends Page
 
     public function startOver(): void
     {
-        $this->reset(['step', 'uploadPath', 'filePath', 'fileName', 'sheets', 'headers', 'sample', 'totalRows', 'reviewOffset', 'reviewedRows', 'invalidRows', 'reviewFinished', 'reviewToken', 'errorRows', 'errorsByColumn', 'importId']);
+        $this->reset(['step', 'uploadPath', 'filePath', 'fileName', 'sheets', 'headers', 'sample', 'totalRows', 'reviewOffset', 'reviewedRows', 'invalidRows', 'reviewFinished', 'reviewToken', 'errorRows', 'errorsByColumn', 'importId', 'auditId', 'awaitingApproval']);
         $this->data = [];
         $this->content->fill();
 
@@ -530,7 +657,7 @@ abstract class ImportWizardPage extends Page
      */
     protected function getImporterOptions(): array
     {
-        return collect($this->data)->except(['file', 'columnMap', 'sheet'])->all();
+        return collect($this->data)->except(['file', 'uploadedFileName', 'columnMap', 'sheet'])->all();
     }
 
     protected function source(): CsvSource

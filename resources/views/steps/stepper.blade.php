@@ -25,6 +25,10 @@
     .iw-errors li:first-child { border-top: 0; }
     .iw-errors strong { margin-right: .5rem; }
     .iw-actions { display: flex; justify-content: flex-end; gap: .75rem; }
+    .iw-drop { display: block; border: 2px dashed var(--gray-300); border-radius: .75rem; padding: 2rem 1rem; text-align: center; cursor: pointer; transition: border-color .15s, background .15s; }
+    .iw-drop:hover, .iw-drop[data-over="true"] { border-color: var(--primary-600); background: color-mix(in srgb, var(--primary-600) 6%, transparent); }
+    .dark .iw-drop { border-color: rgba(255,255,255,.2); }
+    .iw-drop small { display: block; margin-top: .25rem; color: var(--gray-500); }
     .iw-stack > * + * { margin-top: 1rem; }
 </style>
 

@@ -2,6 +2,8 @@
 
 namespace SolutionForest\FilamentImportWizard\Tests;
 
+use BladeUI\Heroicons\BladeHeroiconsServiceProvider;
+use BladeUI\Icons\BladeIconsServiceProvider;
 use Filament\Actions\ActionsServiceProvider;
 use Filament\FilamentServiceProvider;
 use Filament\Forms\FormsServiceProvider;
@@ -13,6 +15,7 @@ use Filament\Tables\TablesServiceProvider;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Auth\User;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Livewire\LivewireServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
@@ -23,6 +26,8 @@ abstract class TestCase extends Orchestra
     protected function getPackageProviders($app): array
     {
         return [
+            BladeIconsServiceProvider::class,
+            BladeHeroiconsServiceProvider::class,
             LivewireServiceProvider::class,
             SupportServiceProvider::class,
             ActionsServiceProvider::class,
@@ -83,10 +88,11 @@ abstract class TestCase extends Orchestra
 
         foreach (glob(base_path('../../../../vendor/filament/actions/database/migrations/*.php') ?: []) as $_) {
         }
-        foreach (glob(dirname(__DIR__).'/vendor/filament/actions/database/migrations/*.php') as $migration) {
+        foreach (array_merge(glob(dirname(__DIR__).'/vendor/filament/actions/database/migrations/*.php') ?: [], glob(dirname(__DIR__).'/database/migrations/*.php') ?: []) as $migration) {
             (require $migration)->up();
         }
 
         @mkdir(sys_get_temp_dir().'/import-wizard-tests', recursive: true);
+        File::cleanDirectory(sys_get_temp_dir().'/import-wizard-tests');
     }
 }

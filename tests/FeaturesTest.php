@@ -2,12 +2,15 @@
 
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Auth\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Writer\XLSX\Writer;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xls;
+use SolutionForest\FilamentImportWizard\Checks\Stores\DatabaseSeenStore;
+use SolutionForest\FilamentImportWizard\Checks\Stores\SqliteSeenStore;
 use SolutionForest\FilamentImportWizard\Checks\UniqueInFile;
 use SolutionForest\FilamentImportWizard\ImportWizardPlugin;
 use SolutionForest\FilamentImportWizard\Rules\CommonRules;
@@ -51,11 +54,11 @@ it('flags duplicates inside the file with constant memory state that survives be
     $dir = sys_get_temp_dir().'/iw-unique-'.uniqid();
     $map = ['name' => 'n', 'email' => 'e'];
 
-    $first = new RowValidator(ContactImporter::class, $map, [], [new UniqueInFile(['email'], $dir)], 'run1', fresh: true);
+    $first = new RowValidator(ContactImporter::class, $map, [], [new UniqueInFile(['email'], new SqliteSeenStore($dir))], 'run1', fresh: true);
     expect($first->validate(['n' => 'A', 'e' => 'a@x.com'], 1))->toBe([]);
 
     // A later request resumes the same run with new check instances.
-    $second = new RowValidator(ContactImporter::class, $map, [], [new UniqueInFile(['email'], $dir)], 'run1', fresh: false);
+    $second = new RowValidator(ContactImporter::class, $map, [], [new UniqueInFile(['email'], new SqliteSeenStore($dir))], 'run1', fresh: false);
     expect($second->validate(['n' => 'B', 'e' => 'A@X.com '], 2))->toHaveKey('email')
         ->and($second->validate(['n' => 'C', 'e' => 'c@x.com'], 3))->toBe([]);
 
@@ -152,4 +155,18 @@ it('runs a server-side import from the console, validating first', function () {
     $this->artisan('import-wizard:run', ['importer' => ContactImporter::class, 'path' => 'big.csv', '--disk' => 'imports', '--user' => $user->getKey(), '--force' => true])
         ->assertSuccessful();
     expect(Contact::count())->toBe(2);
+});
+
+it('can keep the duplicate-check state in the shared database for multi-server setups', function () {
+    $map = ['name' => 'n', 'email' => 'e'];
+
+    $first = new RowValidator(ContactImporter::class, $map, [], [new UniqueInFile(['email'], new DatabaseSeenStore)], 'run-db', fresh: true);
+    expect($first->validate(['n' => 'A', 'e' => 'a@x.com'], 1))->toBe([]);
+
+    // Another server picks up the next slice.
+    $other = new RowValidator(ContactImporter::class, $map, [], [new UniqueInFile(['email'], new DatabaseSeenStore)], 'run-db', fresh: false);
+    expect($other->validate(['n' => 'B', 'e' => 'a@x.com'], 2))->toHaveKey('email');
+
+    $other->finish('run-db');
+    expect(DB::table('import_wizard_seen')->count())->toBe(0);
 });

@@ -5,8 +5,9 @@ return [
     'steps' => ['upload' => 'Upload', 'map' => 'Map', 'review' => 'Review', 'import' => 'Import'],
     'upload' => [
         'label' => 'CSV or Excel file',
-        'helper' => 'Drop a CSV, XLSX or ODS file here (first sheet, first row = headers). Large files are read in slices, so size is only limited by your upload settings.',
+        'helper' => 'CSV, XLSX, XLS or ODS. The first row must hold the column headers. Large files are processed in slices.',
         'sheet' => 'Sheet',
+        'drop' => 'Drop a file here or click to browse',
         'empty' => 'The file has no header row.',
     ],
     'map' => [
@@ -23,12 +24,17 @@ return [
         'invalid' => ':count rows have problems (rows that fail validation are skipped on import)',
         'row' => 'Row :row',
         'import' => 'Import :count rows',
+        'submit_for_approval' => 'Submit for approval',
         'back' => 'Back to mapping',
     ],
     'import' => [
         'importing' => 'Importing… :processed of :total rows',
         'done' => 'Import finished: :successful of :total rows imported',
         'failed' => ':count rows failed. Download them from the notification.',
+    ],
+    'approval' => [
+        'submitted' => 'Submitted for approval',
+        'hint' => 'The file was checked and is waiting for an approver. You will be notified when the import has run. Progress and history are in the Import audit page.',
     ],
     'start_over' => 'Start over',
     'started_over' => 'Import reset',

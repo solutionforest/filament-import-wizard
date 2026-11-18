@@ -39,7 +39,7 @@
     <div class="iw-actions">
         <x-filament::button color="gray" wire:click="startOver">{{ __('filament-import-wizard::import.start_over') }}</x-filament::button>
         <x-filament::button :disabled="! $livewire->reviewFinished" wire:click="startImport">
-            {{ __('filament-import-wizard::import.review.import', ['count' => number_format($valid)]) }}
+            {{ $livewire->needsApproval() ? __('filament-import-wizard::import.review.submit_for_approval') : __('filament-import-wizard::import.review.import', ['count' => number_format($valid)]) }}
         </x-filament::button>
     </div>
 </div>

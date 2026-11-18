@@ -164,7 +164,7 @@ class ImportCommand extends Command
         $names = array_map(fn (ImportColumn $column): string => $column->getName(), $columns);
         $overrides = $this->option('map');
 
-        foreach (is_array($overrides) ? $overrides : [] as $pair) {
+        foreach ($overrides as $pair) {
             if (! is_string($pair) || ! str_contains($pair, '=')) {
                 continue;
             }
