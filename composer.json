@@ -1,0 +1,59 @@
+{
+    "name": "solution-forest/filament-import-wizard",
+    "description": "A step-by-step (Upload \u2192 Map \u2192 Review \u2192 Import) import wizard for Filament, built on Filament's own Importer classes with streaming, pre-import validation and smart column mapping.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "filament",
+        "laravel",
+        "import",
+        "csv",
+        "wizard"
+    ],
+    "require": {
+        "php": "^8.2",
+        "filament/filament": "^5.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^10.0|^11.0",
+        "pestphp/pest": "^3.0|^4.0",
+        "pestphp/pest-plugin-laravel": "^3.0|^4.0",
+        "laravel/pint": "^1.0",
+        "orchestra/workbench": "^11.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "SolutionForest\\FilamentImportWizard\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SolutionForest\\FilamentImportWizard\\Tests\\": "tests/",
+            "Workbench\\App\\": "workbench/app/",
+            "Workbench\\Database\\Factories\\": "workbench/database/factories/",
+            "Workbench\\Database\\Seeders\\": "workbench/database/seeders/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "SolutionForest\\FilamentImportWizard\\ImportWizardServiceProvider"
+            ]
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "php-http/discovery": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "scripts": {
+        "serve": [
+            "@php vendor/bin/testbench workbench:build --no-interaction",
+            "@php vendor/bin/testbench filament:assets","@php vendor/bin/testbench serve --host=127.0.0.1 --port=8765"
+        ],
+        "test": "pest"
+    }
+}
