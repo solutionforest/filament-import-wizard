@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace SolutionForest\FilamentImportWizard\Pages;
 
 use Filament\Actions\Imports\ImportColumn;
@@ -15,18 +17,24 @@ use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Filament\Support\Components\Attributes\Exposed;
 use Filament\Support\Components\Attributes\Unexposed;
+use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use LogicException;
+use RuntimeException;
+use SolutionForest\FilamentImportWizard\Checks\RowCheck;
+use SolutionForest\FilamentImportWizard\ImportWizardPlugin;
 use SolutionForest\FilamentImportWizard\Support\ColumnMapper;
 use SolutionForest\FilamentImportWizard\Support\CsvSource;
+use SolutionForest\FilamentImportWizard\Support\FileNormalizer;
 use SolutionForest\FilamentImportWizard\Support\ImportStarter;
 use SolutionForest\FilamentImportWizard\Support\RowValidator;
-use SolutionForest\FilamentImportWizard\Support\SpreadsheetConverter;
 
 /**
  * A four step import page: Upload → Map → Review → Import.
  *
- * Extend it, point it at a Filament Importer and register it like any page:
+ * Extend it, point it at a Filament Importer and register it on a panel, either
+ * with `->pages([...])` or through {@see ImportWizardPlugin}:
  *
  *     class ImportContacts extends ImportWizardPage
  *     {
@@ -36,9 +44,19 @@ use SolutionForest\FilamentImportWizard\Support\SpreadsheetConverter;
  * The file is never loaded into memory. Review validates it in small slices
  * driven by polling, and the import itself is queued through Filament's own
  * ImportDispatcher, one job per slice.
+ *
+ * @property-read Schema $content
  */
 abstract class ImportWizardPage extends Page
 {
+    public const STEP_UPLOAD = 1;
+
+    public const STEP_MAP = 2;
+
+    public const STEP_REVIEW = 3;
+
+    public const STEP_IMPORT = 4;
+
     /**
      * @var class-string<Importer>|null
      */
@@ -48,20 +66,17 @@ abstract class ImportWizardPage extends Page
 
     protected string $view = 'filament-import-wizard::pages.import-wizard';
 
-    public const STEP_UPLOAD = 1;
-
-    public const STEP_MAP = 2;
-
-    public const STEP_REVIEW = 3;
-
-    public const STEP_IMPORT = 4;
-
-    /** @var array<string, mixed> */
+    /** @var array<string, mixed>|null */
     public ?array $data = [];
 
     #[Locked]
     public int $step = self::STEP_UPLOAD;
 
+    /** The stored upload, exactly as the user sent it. */
+    #[Locked]
+    public string $uploadPath = '';
+
+    /** The UTF-8 CSV the wizard actually reads (equal to $uploadPath for plain UTF-8 CSV). */
     #[Locked]
     public string $filePath = '';
 
@@ -71,11 +86,15 @@ abstract class ImportWizardPage extends Page
     #[Locked]
     public string $delimiter = ',';
 
-    /** @var array<int, string> */
+    /** @var list<string> */
+    #[Locked]
+    public array $sheets = [];
+
+    /** @var list<string> */
     #[Locked]
     public array $headers = [];
 
-    /** @var array<int, array<string, string|null>> */
+    /** @var list<array<string, string|null>> */
     #[Locked]
     public array $sample = [];
 
@@ -95,7 +114,10 @@ abstract class ImportWizardPage extends Page
     #[Locked]
     public bool $reviewFinished = false;
 
-    /** @var array<int, array{row: int, errors: array<string, array<int, string>>}> */
+    #[Locked]
+    public string $reviewToken = '';
+
+    /** @var list<array{row: int, errors: array<string, list<string>>}> */
     #[Locked]
     public array $errorRows = [];
 
@@ -106,57 +128,73 @@ abstract class ImportWizardPage extends Page
     #[Locked]
     public ?int $importId = null;
 
-    protected function getRowsPerReviewRequest(): int
-    {
-        return 2000;
-    }
-
-    protected function getChunkSize(): int
-    {
-        return 500;
-    }
-
-    protected function getMaxCollectedErrors(): int
-    {
-        return 50;
-    }
-
-    protected function getUploadDisk(): string
-    {
-        return config('filament.default_filesystem_disk', 'local');
-    }
-
-    protected function getUploadDirectory(): string
-    {
-        return 'import-wizard';
-    }
-
-    protected function getMaxUploadSizeInKilobytes(): ?int
-    {
-        return null;
-    }
-
     /**
      * @return class-string<Importer>
      */
     public static function getImporter(): string
     {
-        return static::$importer ?? throw new \LogicException(static::class.' must define the $importer property.');
+        return static::$importer ?? throw new LogicException(static::class.' must define the $importer property.');
     }
 
     public function getTitle(): string
     {
         return __('filament-import-wizard::import.title', [
-            'label' => str(class_basename(static::getImporter()))->beforeLast('Importer')->headline()->lower()->plural()->toString(),
+            'label' => Str::of(class_basename(static::getImporter()))->beforeLast('Importer')->headline()->lower()->plural()->toString(),
         ]);
     }
 
     /**
-     * @return array<ImportColumn>
+     * @return list<ImportColumn>
      */
     public function getImportColumns(): array
     {
-        return static::getImporter()::getColumns();
+        return array_values(static::getImporter()::getColumns());
+    }
+
+    /**
+     * File-level checks that run next to the importer's own rules during
+     * Review, for example `new UniqueInFile(['email'])`.
+     *
+     * @return list<RowCheck>
+     */
+    protected function getRowChecks(): array
+    {
+        return [];
+    }
+
+    protected function getPlugin(): ImportWizardPlugin
+    {
+        return ImportWizardPlugin::current();
+    }
+
+    protected function getUploadDisk(): string
+    {
+        return $this->getPlugin()->getDisk();
+    }
+
+    protected function getUploadDirectory(): string
+    {
+        return $this->getPlugin()->getDirectory();
+    }
+
+    protected function getChunkSize(): int
+    {
+        return $this->getPlugin()->getChunkSize();
+    }
+
+    protected function getRowsPerReviewRequest(): int
+    {
+        return $this->getPlugin()->getRowsPerReviewRequest();
+    }
+
+    protected function getMaxCollectedErrors(): int
+    {
+        return $this->getPlugin()->getMaxCollectedErrors();
+    }
+
+    protected function getMaxUploadSizeInKilobytes(): ?int
+    {
+        return $this->getPlugin()->getMaxUploadSizeInKilobytes();
     }
 
     #[Unexposed]
@@ -174,14 +212,13 @@ abstract class ImportWizardPage extends Page
                             ->helperText(__('filament-import-wizard::import.upload.helper'))
                             ->disk($this->getUploadDisk())
                             ->directory($this->getUploadDirectory())
-                            ->acceptedFileTypes(['text/csv', 'text/x-csv', 'application/csv', 'application/x-csv', 'text/comma-separated-values', 'text/plain', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.oasis.opendocument.spreadsheet'])
+                            ->acceptedFileTypes($this->getAcceptedFileTypes())
                             ->maxSize($this->getMaxUploadSizeInKilobytes())
-                            ->storeFileNamesIn('fileName')
                             ->required()
                             ->afterStateUpdated(function (FileUpload $component): void {
                                 // Store the upload right away (FileUpload normally only does so on
                                 // submit). Saving re-fires this hook with the stored path.
-                                if (collect((array) $component->getRawState())->contains(fn ($file): bool => $file instanceof TemporaryUploadedFile)) {
+                                if (collect((array) $component->getRawState())->contains(fn (mixed $file): bool => $file instanceof TemporaryUploadedFile)) {
                                     $component->saveUploadedFiles();
 
                                     return;
@@ -189,13 +226,19 @@ abstract class ImportWizardPage extends Page
 
                                 $this->analyzeUpload();
                             }),
+                        Select::make('sheet')
+                            ->label(__('filament-import-wizard::import.upload.sheet'))
+                            ->options(fn (): array => $this->sheets)
+                            ->visible(fn (): bool => count($this->sheets) > 1 && $this->filePath === '')
+                            ->live()
+                            ->afterStateUpdated(fn (mixed $state) => $this->selectSheet($state)),
                     ]),
                 Section::make(__('filament-import-wizard::import.map.heading'))
                     ->description(__('filament-import-wizard::import.map.description'))
                     ->visible(fn (): bool => $this->step === self::STEP_MAP)
                     ->schema(fn (): array => array_map(
                         fn (ImportColumn $column): Select => $column->getSelect()
-                            ->statePath("columnMap.{$column->getName()}")
+                            ->statePath('columnMap.'.$column->getName())
                             ->options(array_combine($this->headers, $this->headers))
                             ->helperText(fn (mixed $state): ?string => $this->describeSample(is_string($state) ? $state : null)),
                         $this->getImportColumns(),
@@ -210,7 +253,21 @@ abstract class ImportWizardPage extends Page
     }
 
     /**
-     * Step 1 → 2: read the header row and sample rows, and pre-fill the map.
+     * @return list<string>
+     */
+    protected function getAcceptedFileTypes(): array
+    {
+        return [
+            'text/csv', 'text/x-csv', 'application/csv', 'application/x-csv', 'text/comma-separated-values', 'text/plain',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.oasis.opendocument.spreadsheet',
+        ];
+    }
+
+    /**
+     * Step 1 → 2: called once the upload is stored. Spreadsheets with several
+     * sheets wait for the user to pick one; everything else goes straight on.
      */
     public function analyzeUpload(): void
     {
@@ -226,9 +283,40 @@ abstract class ImportWizardPage extends Page
             return;
         }
 
-        $this->filePath = SpreadsheetConverter::supports($path)
-            ? (new SpreadsheetConverter)->convert($this->getUploadDisk(), $path)
-            : $path;
+        $this->uploadPath = $path;
+        $this->fileName = basename($path);
+
+        try {
+            $this->sheets = (new FileNormalizer)->sheets($this->getUploadDisk(), $path);
+
+            if (count($this->sheets) > 1) {
+                return;
+            }
+
+            $this->prepareFile(0);
+        } catch (RuntimeException $exception) {
+            $this->addError('data.file', $exception->getMessage());
+        }
+    }
+
+    public function selectSheet(mixed $index): void
+    {
+        $index = is_numeric($index) ? (int) $index : -1;
+
+        if ($this->uploadPath === '' || ! isset($this->sheets[$index])) {
+            return;
+        }
+
+        try {
+            $this->prepareFile($index);
+        } catch (RuntimeException $exception) {
+            $this->addError('data.sheet', $exception->getMessage());
+        }
+    }
+
+    protected function prepareFile(int $sheet): void
+    {
+        $this->filePath = (new FileNormalizer)->normalize($this->getUploadDisk(), $this->uploadPath, $sheet);
 
         $this->loadFile();
     }
@@ -245,8 +333,9 @@ abstract class ImportWizardPage extends Page
         $source = $this->source();
 
         $this->delimiter = $source->getDelimiter();
-        $this->headers = array_values(array_filter($source->getHeaders(), 'filled'));
-        $this->sample = iterator_to_array($source->read($source->getHeaders(), $source->getDataStartOffset(), 5), false);
+        $allHeaders = $source->getHeaders();
+        $this->headers = array_values(array_filter($allHeaders, fn (string $header): bool => $header !== ''));
+        $this->sample = iterator_to_array($source->read($allHeaders, $source->getDataStartOffset(), 5), false);
 
         if ($this->headers === []) {
             $this->addError('data.file', __('filament-import-wizard::import.upload.empty'));
@@ -264,30 +353,40 @@ abstract class ImportWizardPage extends Page
     public function confirmMapping(): void
     {
         $columnNames = array_map(fn (ImportColumn $column): string => $column->getName(), $this->getImportColumns());
+        $submitted = is_array($this->data['columnMap'] ?? null) ? $this->data['columnMap'] : [];
 
         // Keep only known importer columns mapped to headers that really exist in the file.
-        $map = array_filter(
-            (array) ($this->data['columnMap'] ?? []),
-            fn ($header, $name): bool => in_array($name, $columnNames, true) && in_array($header, $this->headers, true),
-            ARRAY_FILTER_USE_BOTH,
-        );
+        $map = [];
 
-        foreach ($this->getImportColumns() as $column) {
-            if ($column->isMappingRequired() && blank($map[$column->getName()] ?? null)) {
-                $this->addError("data.columnMap.{$column->getName()}", __('filament-import-wizard::import.map.required', ['column' => $column->getLabel()]));
+        foreach ($submitted as $name => $header) {
+            if (is_string($name) && is_string($header) && in_array($name, $columnNames, true) && in_array($header, $this->headers, true)) {
+                $map[$name] = $header;
             }
         }
 
-        if ($this->getErrorBag()->isNotEmpty()) {
+        $missing = false;
+
+        foreach ($this->getImportColumns() as $column) {
+            if ($column->isMappingRequired() && blank($map[$column->getName()] ?? null)) {
+                $this->addError('data.columnMap.'.$column->getName(), __('filament-import-wizard::import.map.required', ['column' => $column->getLabel()]));
+                $missing = true;
+            }
+        }
+
+        if ($missing) {
             return;
         }
 
         $this->data['columnMap'] = $map;
-        $this->totalRows = $this->source()->countRows();
-        $this->reviewOffset = $this->source()->getDataStartOffset();
+
+        $source = $this->source();
+
+        $this->totalRows = $source->countRows();
+        $this->reviewOffset = $source->getDataStartOffset();
         $this->reviewedRows = $this->invalidRows = 0;
         $this->errorRows = $this->errorsByColumn = [];
         $this->reviewFinished = false;
+        $this->reviewToken = Str::random(16);
         $this->step = self::STEP_REVIEW;
     }
 
@@ -303,13 +402,23 @@ abstract class ImportWizardPage extends Page
         }
 
         $source = $this->source();
-        $validator = new RowValidator(static::getImporter(), $this->data['columnMap'], $this->getImporterOptions());
-        $rows = $source->read($source->getHeaders(), $this->reviewOffset, $this->getRowsPerReviewRequest());
+        $validator = new RowValidator(
+            static::getImporter(),
+            $this->getColumnMap(),
+            $this->getImporterOptions(),
+            $this->getRowChecks(),
+            $this->reviewToken,
+            fresh: $this->reviewedRows === 0,
+        );
+
+        $perRequest = $this->getRowsPerReviewRequest();
+        $rows = $source->read($source->getHeaders(), $this->reviewOffset, $perRequest);
         $count = 0;
 
         foreach ($rows as $row) {
             $count++;
-            $errors = $validator->validate($row);
+            $rowNumber = $this->reviewedRows + $count;
+            $errors = $validator->validate($row, $rowNumber);
 
             if ($errors === []) {
                 continue;
@@ -322,13 +431,17 @@ abstract class ImportWizardPage extends Page
             }
 
             if (count($this->errorRows) < $this->getMaxCollectedErrors()) {
-                $this->errorRows[] = ['row' => $this->reviewedRows + $count, 'errors' => $errors];
+                $this->errorRows[] = ['row' => $rowNumber, 'errors' => $errors];
             }
         }
 
         $this->reviewOffset = $rows->getReturn();
         $this->reviewedRows += $count;
-        $this->reviewFinished = $count < $this->getRowsPerReviewRequest() || $this->reviewedRows >= $this->totalRows;
+        $this->reviewFinished = $count < $perRequest || $this->reviewedRows >= $this->totalRows;
+
+        if ($this->reviewFinished) {
+            $validator->finish($this->reviewToken);
+        }
     }
 
     /**
@@ -336,33 +449,40 @@ abstract class ImportWizardPage extends Page
      */
     public function startImport(): void
     {
-        if (! $this->reviewFinished || $this->importId) {
+        if (! $this->reviewFinished || $this->importId !== null) {
             return;
         }
 
         $import = (new ImportStarter)->start(
             source: $this->source(),
             importer: static::getImporter(),
-            fileName: $this->fileName ?: basename($this->filePath),
-            columnMap: $this->data['columnMap'],
+            fileName: $this->fileName,
+            columnMap: $this->getColumnMap(),
             options: $this->getImporterOptions(),
             chunkSize: $this->getChunkSize(),
             user: Filament::auth()->user(),
             authGuard: Filament::getAuthGuard(),
         );
 
-        $this->importId = $import->getKey();
+        $key = $import->getKey();
+        $this->importId = is_int($key) ? $key : null;
         $this->step = self::STEP_IMPORT;
     }
 
     public function getImport(): ?Import
     {
-        return $this->importId ? app(Import::class)::query()->find($this->importId) : null;
+        if ($this->importId === null) {
+            return null;
+        }
+
+        $import = app(Import::class)::query()->find($this->importId);
+
+        return $import instanceof Import ? $import : null;
     }
 
     public function startOver(): void
     {
-        $this->reset(['step', 'filePath', 'fileName', 'headers', 'sample', 'totalRows', 'reviewOffset', 'reviewedRows', 'invalidRows', 'reviewFinished', 'errorRows', 'errorsByColumn', 'importId']);
+        $this->reset(['step', 'uploadPath', 'filePath', 'fileName', 'sheets', 'headers', 'sample', 'totalRows', 'reviewOffset', 'reviewedRows', 'invalidRows', 'reviewFinished', 'reviewToken', 'errorRows', 'errorsByColumn', 'importId']);
         $this->data = [];
         $this->content->fill();
 
@@ -371,13 +491,38 @@ abstract class ImportWizardPage extends Page
 
     public function describeSample(?string $header): ?string
     {
-        if (blank($header)) {
+        if ($header === null || $header === '') {
             return null;
         }
 
-        $values = collect($this->sample)->pluck($header)->filter(fn ($value): bool => filled($value))->take(3);
+        $values = collect($this->sample)
+            ->pluck($header)
+            ->filter(fn (mixed $value): bool => is_string($value) && $value !== '')
+            ->take(3);
 
-        return $values->isEmpty() ? null : __('filament-import-wizard::import.map.sample', ['values' => $values->implode(', ')]);
+        if ($values->isEmpty()) {
+            return null;
+        }
+
+        $text = __('filament-import-wizard::import.map.sample', ['values' => implode(', ', $values->all())]);
+
+        return is_string($text) ? $text : null;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function getColumnMap(): array
+    {
+        $map = [];
+
+        foreach (is_array($this->data['columnMap'] ?? null) ? $this->data['columnMap'] : [] as $name => $header) {
+            if (is_string($name) && is_string($header)) {
+                $map[$name] = $header;
+            }
+        }
+
+        return $map;
     }
 
     /**
@@ -385,12 +530,12 @@ abstract class ImportWizardPage extends Page
      */
     protected function getImporterOptions(): array
     {
-        return collect($this->data)->except(['file', 'columnMap'])->all();
+        return collect($this->data)->except(['file', 'columnMap', 'sheet'])->all();
     }
 
     protected function source(): CsvSource
     {
-        return new CsvSource($this->getUploadDisk(), $this->filePath, $this->delimiter ?: null);
+        return new CsvSource($this->getUploadDisk(), $this->filePath, $this->delimiter);
     }
 
     public function mount(): void

@@ -6,9 +6,9 @@ use OpenSpout\Common\Entity\Row;
 use OpenSpout\Writer\XLSX\Writer;
 use SolutionForest\FilamentImportWizard\Support\ColumnMapper;
 use SolutionForest\FilamentImportWizard\Support\CsvSource;
+use SolutionForest\FilamentImportWizard\Support\FileNormalizer;
 use SolutionForest\FilamentImportWizard\Support\ImportStarter;
 use SolutionForest\FilamentImportWizard\Support\RowValidator;
-use SolutionForest\FilamentImportWizard\Support\SpreadsheetConverter;
 use SolutionForest\FilamentImportWizard\Tests\Fixtures\Contact;
 use SolutionForest\FilamentImportWizard\Tests\Fixtures\ContactImporter;
 
@@ -97,7 +97,7 @@ it('converts the first sheet of an xlsx file to csv', function () {
     $writer->close();
     Storage::disk('imports')->put('book.xlsx', file_get_contents($path));
 
-    $csv = (new SpreadsheetConverter)->convert('imports', 'book.xlsx');
+    $csv = (new FileNormalizer)->normalize('imports', 'book.xlsx');
     $source = new CsvSource('imports', $csv);
 
     expect($source->getHeaders())->toBe(['name', 'email'])

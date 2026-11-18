@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace SolutionForest\FilamentImportWizard\Support;
 
 use Filament\Actions\Imports\ImportColumn;

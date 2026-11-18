@@ -1,11 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace SolutionForest\FilamentImportWizard\Support;
 
 use Filament\Actions\Imports\ImportDispatcher;
 use Filament\Actions\Imports\Importer;
 use Filament\Actions\Imports\Models\Import;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Model;
 use SolutionForest\FilamentImportWizard\Jobs\ImportCsvSlice;
 
 class ImportStarter
@@ -34,16 +37,11 @@ class ImportStarter
         $descriptors = [];
 
         foreach ($slices as $slice) {
-            $descriptors[] = $slice + [
-                'disk' => $source->getDisk(),
-                'path' => $source->getPath(),
-                'delimiter' => $source->getDelimiter(),
-                'headers' => $headers,
-            ];
+            $descriptors[] = (new Slice($source->getDisk(), $source->getPath(), $source->getDelimiter(), $headers, $slice['offset'], $slice['count']))->toChunk();
         }
 
         $import = app(Import::class);
-        $import->user()->associate($user);
+        $import->user()->associate($user instanceof Model ? $user : null);
         $import->file_name = $fileName;
         $import->file_path = $source->getPath();
         $import->importer = $importer;

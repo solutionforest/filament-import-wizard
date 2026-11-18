@@ -21,11 +21,11 @@ function wizardCsv(): string
 it('walks upload → map → review → import', function () {
     $this->actingAs(User::forceCreate(['name' => 'Admin']));
 
-    Storage::disk('imports')->put('import-wizard/people.csv', wizardCsv());
+    Storage::disk('imports')->put('import-wizard/admin/people.csv', wizardCsv());
 
     // FileUpload has stored the file by the time analyzeUpload() runs.
     $page = Livewire::test(ImportContacts::class)
-        ->set('data.file', ['uuid' => 'import-wizard/people.csv'])
+        ->set('data.file', ['uuid' => 'import-wizard/admin/people.csv'])
         ->call('analyzeUpload');
 
     expect($page->get('step'))->toBe(2)
@@ -54,10 +54,10 @@ it('walks upload → map → review → import', function () {
 it('blocks continuing while a required column is unmapped', function () {
     $this->actingAs(User::forceCreate(['name' => 'Admin']));
 
-    Storage::disk('imports')->put('import-wizard/x.csv', "foo,bar\n1,2\n");
+    Storage::disk('imports')->put('import-wizard/admin/x.csv', "foo,bar\n1,2\n");
 
     Livewire::test(ImportContacts::class)
-        ->set('data.file', ['uuid' => 'import-wizard/x.csv'])
+        ->set('data.file', ['uuid' => 'import-wizard/admin/x.csv'])
         ->call('analyzeUpload')
         ->call('confirmMapping')
         ->assertHasErrors(['data.columnMap.name'])
@@ -74,10 +74,10 @@ it('rejects file paths outside the upload directory and tampered mappings', func
         ->assertSet('step', 1)
         ->assertSet('filePath', '');
 
-    Storage::disk('imports')->put('import-wizard/ok.csv', "name,email\nA,a@x.com\n");
+    Storage::disk('imports')->put('import-wizard/admin/ok.csv', "name,email\nA,a@x.com\n");
 
     Livewire::test(ImportContacts::class)
-        ->set('data.file', ['uuid' => 'import-wizard/ok.csv'])
+        ->set('data.file', ['uuid' => 'import-wizard/admin/ok.csv'])
         ->call('analyzeUpload')
         ->set('data.columnMap.name', 'nonexistent')
         ->call('confirmMapping')

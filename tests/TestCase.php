@@ -34,6 +34,7 @@ abstract class TestCase extends Orchestra
             FilamentServiceProvider::class,
             ImportWizardServiceProvider::class,
             Fixtures\TestPanelProvider::class,
+            Fixtures\StaffPanelProvider::class,
         ];
     }
 

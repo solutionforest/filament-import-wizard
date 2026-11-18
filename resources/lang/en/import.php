@@ -6,6 +6,7 @@ return [
     'upload' => [
         'label' => 'CSV or Excel file',
         'helper' => 'Drop a CSV, XLSX or ODS file here (first sheet, first row = headers). Large files are read in slices, so size is only limited by your upload settings.',
+        'sheet' => 'Sheet',
         'empty' => 'The file has no header row.',
     ],
     'map' => [
@@ -19,7 +20,7 @@ return [
         'checking' => 'Checking… :checked of :total rows',
         'ready' => 'All :total rows checked',
         'valid' => ':count rows are ready to import',
-        'invalid' => ':count rows have problems and will be skipped',
+        'invalid' => ':count rows have problems (rows that fail validation are skipped on import)',
         'row' => 'Row :row',
         'import' => 'Import :count rows',
         'back' => 'Back to mapping',

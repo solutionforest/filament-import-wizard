@@ -7,6 +7,7 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Illuminate\Contracts\Auth\Authenticatable;
+use SolutionForest\FilamentImportWizard\ImportWizardPlugin;
 use Workbench\App\Filament\Pages\ImportContacts;
 use Workbench\App\Http\DemoLogin;
 use Workbench\App\Models\User;
@@ -30,7 +31,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->homeUrl('/admin/import-contacts')
             ->colors(['primary' => Color::Indigo])
-            ->pages([ImportContacts::class])
+            ->plugin(ImportWizardPlugin::make()->pages([ImportContacts::class])->chunkSize(500))
             ->authMiddleware([DemoLogin::class, Authenticate::class], isPersistent: true);
     }
 }

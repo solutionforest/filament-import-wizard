@@ -1,25 +1,29 @@
 {
     "name": "solution-forest/filament-import-wizard",
-    "description": "A step-by-step (Upload \u2192 Map \u2192 Review \u2192 Import) import wizard for Filament, built on Filament's own Importer classes with streaming, pre-import validation and smart column mapping.",
+    "description": "Self-hosted Filament v5 import wizard: Upload \u2192 Map \u2192 Review \u2192 Import. CSV, XLSX, ODS and XLS, huge files, pre-import validation, reusable rules, smart column mapping, multi-panel.",
     "type": "library",
-    "license": "MIT",
+    "license": "proprietary",
     "keywords": [
         "filament",
         "laravel",
         "import",
         "csv",
+        "excel",
         "wizard"
     ],
     "require": {
         "php": "^8.2",
-        "filament/filament": "^5.0"
+        "filament/filament": "^5.0",
+        "ext-pdo_sqlite": "*"
     },
     "require-dev": {
         "orchestra/testbench": "^10.0|^11.0",
         "pestphp/pest": "^3.0|^4.0",
         "pestphp/pest-plugin-laravel": "^3.0|^4.0",
         "laravel/pint": "^1.0",
-        "orchestra/workbench": "^11.3"
+        "orchestra/workbench": "^11.3",
+        "larastan/larastan": "^3.15",
+        "phpoffice/phpspreadsheet": "^5.11"
     },
     "autoload": {
         "psr-4": {
@@ -45,15 +49,28 @@
         "allow-plugins": {
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
-        }
+        },
+        "sort-packages": true
     },
     "minimum-stability": "stable",
     "prefer-stable": true,
     "scripts": {
         "serve": [
             "@php vendor/bin/testbench workbench:build --no-interaction",
-            "@php vendor/bin/testbench filament:assets","@php vendor/bin/testbench serve --host=127.0.0.1 --port=8765"
+            "@php vendor/bin/testbench filament:assets",
+            "@php vendor/bin/testbench serve --host=127.0.0.1 --port=8765"
         ],
-        "test": "pest"
+        "test": "pest",
+        "analyse": "phpstan analyse --memory-limit=1G",
+        "check": [
+            "@analyse",
+            "@test"
+        ]
+    },
+    "suggest": {
+        "phpoffice/phpspreadsheet": "Required to import legacy .xls files (loaded fully into memory, so keep those files modest)."
+    },
+    "support": {
+        "source": "https://github.com/solutionforest/filament-import-wizard"
     }
 }

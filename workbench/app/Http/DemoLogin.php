@@ -4,6 +4,7 @@ namespace Workbench\App\Http;
 
 use Closure;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Workbench\App\Models\User;
 
 /**
@@ -12,7 +13,10 @@ use Workbench\App\Models\User;
  */
 class DemoLogin
 {
-    public function handle(Request $request, Closure $next)
+    /**
+     * @param  Closure(Request): Response  $next
+     */
+    public function handle(Request $request, Closure $next): Response
     {
         auth()->guard('web')->setUser(User::query()->firstOrFail());
 

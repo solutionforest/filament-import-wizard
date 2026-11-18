@@ -1,10 +1,12 @@
 # Filament Import Wizard
 
-A step-by-step **Upload → Map → Review → Import** page for [Filament](https://filamentphp.com) v5 that
-accepts **CSV and Excel (XLSX / ODS)** files, checks every row *before* anything is written, and imports
-files of any size through Filament's own queued importer.
+> **Internal package — self-hosted distribution only.** It lives in Solution Forest's private repository and is
+> installed through Composer's VCS repository mechanism. It is not published to Packagist.
 
-It is built on Filament's `Importer` / `ImportColumn` classes — **any importer you already have works unchanged.**
+A step-by-step **Upload → Map → Review → Import** page for [Filament](https://filamentphp.com) v5 that accepts
+**CSV and Excel (XLSX, XLSM, ODS, XLS)** files, checks every row *before* anything is written, and imports files of
+any size through Filament's own queued importer. It is built on Filament's `Importer` / `ImportColumn` classes, so
+**any importer you already have works unchanged.**
 
 | 1 · Upload | 2 · Map |
 | --- | --- |
@@ -14,26 +16,36 @@ It is built on Filament's `Importer` / `ImportColumn` classes — **any importer
 
 ## Features
 
-- **CSV, XLSX and ODS** – drop a spreadsheet and the first sheet is streamed into a CSV (OpenSpout, already a Filament dependency); headers are taken from the first row.
-- **Built for huge files** – the file is never loaded into memory. It is addressed by byte offset, validated in polled slices, and imported by one queued job per slice (`ImportCsvSlice`, a thin subclass of Filament's `ImportCsv`). The queue payload is just an offset and a row count.
-- **Cross-check before the import starts** – the Review step dry-runs the importer's own *remap → cast → validate* pipeline over **every** row (nothing is saved) and shows live progress, valid / invalid counts and the first 50 failing rows with Filament's own validation messages. The Import button unlocks only when the check has finished.
-- **Smart column mapping** – columns are matched by name, label, `guess()` aliases, normalised names (`E-mail` ↔ `email`), trailing words (`Full name` ↔ `name`) and fuzzy similarity. A file column is never used twice, sample values are shown under each field and required mappings are enforced.
-- **Filament-native** – `FileUpload`, `ImportColumn::getSelect()`, schema components, `ImportDispatcher` (events, `imports` / `failed_import_rows` tables, failed-rows CSV download, completion notification) and Filament's CSS variables, so it follows your panel theme and dark mode.
-- **Safe by default** – the uploaded path and all wizard state are Livewire `#[Locked]`; the file path must live inside the upload directory; mappings are checked against the real importer columns and file headers.
+- **CSV, XLSX, XLSM, ODS and XLS** – spreadsheets are streamed into a UTF-8 CSV (OpenSpout, constant memory); legacy `.xls` uses PhpSpreadsheet when installed. Multi-sheet workbooks ask which sheet to import. CSV in UTF-16 / Windows-1252 is transcoded automatically; the delimiter is auto-detected.
+- **Huge files** – never loaded into memory. The file is addressed by byte offset, validated in polled slices and imported by one queued job per slice (`ImportCsvSlice`, a thin subclass of Filament's `ImportCsv`) whose payload is just an offset and a row count. For files too big for a browser upload there is a console command (below).
+- **Cross-check before the import starts** – Review dry-runs the importer's own *remap → cast → validate* pipeline over **every** row (nothing is saved) plus optional file-level checks such as duplicates, with live progress and the failing rows. Import unlocks when the check has finished.
+- **Reusable rules** – rules live in their own classes and rule sets instead of being re-typed in every importer (see below).
+- **Smart column mapping** – matched by name, label, `guess()` aliases, normalised names (`E-mail` ↔ `email`), trailing words (`Full name` ↔ `name`) and fuzzy similarity; a file column is used once; sample values are shown; required mappings are enforced.
+- **Multi-panel** – register it per panel with its own disk, directory and limits; uploads are kept per panel.
+- **Filament-native** – `FileUpload`, `ImportColumn::getSelect()`, schema components, `ImportDispatcher` (events, `imports` / `failed_import_rows` tables, failed-rows CSV, completion notification) and Filament's CSS variables, so it follows your panel theme and dark mode.
+- **Safe by default** – the upload path and all wizard state are Livewire `#[Locked]`; paths must live inside the panel's upload directory; mappings are checked against the real importer columns and file headers.
+- **Strict code** – PHPStan level 10 (Larastan) and a Pest suite.
 
-## Installation
+## Installation (self-hosted)
+
+Add the private repository to the consuming project, then require the package:
 
 ```bash
-composer require solution-forest/filament-import-wizard
+composer config repositories.filament-import-wizard vcs git@github.com:solutionforest/filament-import-wizard.git
+composer require solution-forest/filament-import-wizard:^0.2
 ```
 
-Run Filament's import migrations (once) and make sure a queue worker is running in production:
+(`composer.json` of the app ends up with a `repositories` entry of `"type": "vcs"`; CI needs a deploy key / token with read access to the repository.)
+
+Then the usual Filament import tables and a queue worker:
 
 ```bash
 php artisan make:queue-batches-table   # job_batches, if you do not have it yet
 php artisan vendor:publish --tag=filament-actions-migrations
 php artisan migrate
 ```
+
+Optional: `composer require phpoffice/phpspreadsheet` to accept legacy `.xls` files.
 
 ## Usage
 
@@ -48,21 +60,87 @@ class ImportContacts extends ImportWizardPage
 }
 ```
 
-Register it in your panel (`->pages([ImportContacts::class])`) and you are done. The page title, navigation and
-authorization (`canAccess()`, `shouldRegisterNavigation()`) work like any Filament page.
+Register it on a panel with the plugin (recommended — gives per-panel settings):
 
-### Tuning
+```php
+use SolutionForest\FilamentImportWizard\ImportWizardPlugin;
 
-Override these on your page class:
+$panel->plugin(
+    ImportWizardPlugin::make()
+        ->pages([ImportContacts::class])
+        ->disk('s3')               // where uploads are stored
+        ->directory('imports')     // uploads go to imports/{panel-id}/
+        ->chunkSize(1000)          // rows per queued job
+        ->rowsPerReviewRequest(5000)
+        ->maxCollectedErrors(100)
+        ->maxUploadSize(512 * 1024), // KB
+);
+```
 
-| Method | Default | Purpose |
-| --- | --- | --- |
-| `getUploadDisk()` | `filament.default_filesystem_disk` | Disk the upload is stored on |
-| `getUploadDirectory()` | `import-wizard` | Directory the upload must live in |
-| `getChunkSize()` | `500` | Rows per queued job |
-| `getRowsPerReviewRequest()` | `2000` | Rows validated per poll in the Review step |
-| `getMaxCollectedErrors()` | `50` | Failing rows shown in Review |
-| `getMaxUploadSizeInKilobytes()` | `null` | Upload size cap |
+…or simply `->pages([ImportContacts::class])` for the defaults. The page title, navigation and authorization
+(`canAccess()`, `shouldRegisterNavigation()`) work like any Filament page.
+
+### Multiple panels
+
+Register the plugin on each panel with its own settings. Settings are resolved from the panel the request is
+served on; each panel stores uploads under `{directory}/{panel-id}/` and a path from another panel's directory is
+rejected. A page class can be shared between panels.
+
+### Reusable rules
+
+Validation does not have to be retyped in each importer. Use the rule sets, or the rule classes directly:
+
+```php
+use SolutionForest\FilamentImportWizard\Rules\CommonRules;
+
+ImportColumn::make('email')->rules(CommonRules::email()),
+ImportColumn::make('phone')->rules(CommonRules::phone()),                 // optional phone
+ImportColumn::make('joined')->rules(CommonRules::date(formats: ['Y-m-d', 'd/m/Y'])),
+ImportColumn::make('status')->rules(CommonRules::oneOf(['active', 'archived'])),
+ImportColumn::make('age')->rules(CommonRules::integer(required: false, min: 0, max: 120)),
+```
+
+`CommonRules` also has `name()` and `url()`. Each method returns a plain list, so it can be merged with extra rules.
+The building blocks are ordinary Laravel `ValidationRule` classes you can use anywhere:
+`Rules\PhoneNumber`, `Rules\DateInFormats`, `Rules\OneOfIgnoringCase`. Write your own the same way and put it in a
+rule set of your app. Messages are translatable (`filament-import-wizard::rules`).
+
+### File-level checks (duplicates in the file)
+
+Some problems only show up across rows. Add `RowCheck`s to the page; they run during Review next to the rules:
+
+```php
+use SolutionForest\FilamentImportWizard\Checks\UniqueInFile;
+
+protected function getRowChecks(): array
+{
+    return [new UniqueInFile(['email'])];   // or ['first_name', 'last_name'] for a combination
+}
+```
+
+`UniqueInFile` keeps its seen-set in a throw-away SQLite file, so memory stays constant for multi-million-row
+files. Implement `Checks\RowCheck` for your own checks. Note that file-level checks inform the Review step only:
+the queued import runs slices in parallel and applies your importer's `resolveRecord()` (so a duplicate row will
+update the earlier one) — fix the file if that is not what you want.
+
+### Very large files: console import
+
+A browser upload is bounded by PHP / Livewire limits. For multi-GB files put the file on a disk (scp, rsync, a
+mounted volume) and run the same pipeline server-side:
+
+```bash
+php artisan import-wizard:run "App\Filament\Imports\ContactImporter" imports/big.csv --disk=s3 --user=1
+php artisan import-wizard:run "App\Filament\Imports\ContactImporter" imports/big.xlsx --sheet=1 --map="email=Work Email" --dry-run
+```
+
+It auto-maps columns (override with `--map=column=Header`), validates every row with progress, prints the first failing
+rows, refuses to import when there are problems unless `--force`, then queues the same sliced import.
+
+### Tuning on the page
+
+Override on your page class for page-specific behaviour: `getUploadDisk()`, `getUploadDirectory()`, `getChunkSize()`,
+`getRowsPerReviewRequest()`, `getMaxCollectedErrors()`, `getMaxUploadSizeInKilobytes()`, `getRowChecks()`,
+`getAcceptedFileTypes()`.
 
 ## Try the demo
 
@@ -75,27 +153,26 @@ composer install
 composer serve          # http://127.0.0.1:8765/admin  (auto-signed-in demo user)
 ```
 
-Open **Import contacts** and upload `workbench/samples/contacts.xlsx` (or `contacts.csv`). The sample deliberately
-contains 3 bad rows (two malformed e-mails, one missing name) so you can see Review catch them: 17 of 20 rows import,
-3 are reported and downloadable as a failed-rows CSV. The demo importer lives in `workbench/app/Filament/Imports`.
+Open **Import contacts** and upload `workbench/samples/contacts.xlsx` (or `contacts.csv`). The sample has 4 problems
+that Review catches: two malformed e-mails, one missing name and one duplicate e-mail. The demo importer
+(`workbench/app/Filament/Imports`) uses `CommonRules` and the page uses `UniqueInFile`.
 
 > The demo signs a user in automatically (`workbench/app/Http/DemoLogin.php`) — demo only, never copy that.
 
-## Limitations
+## Known limits
 
-- Excel: first sheet only, `.xlsx` / `.xlsm` / `.ods` (legacy `.xls` is not supported — save as XLSX). Cell values are read as displayed text/values; dates become `Y-m-d H:i:s`.
-- CSV is read as UTF-8 (BOM handled); delimiter is auto-detected (`, ; | tab`).
-- The upload goes through Livewire's temporary upload, so the maximum size is bounded by your PHP / Livewire limits (`upload_max_filesize`, `post_max_size`, `livewire.temporary_file_upload`). For multi-GB files raise them, or upload to the disk by other means and point the page at it.
-- Review validates rows against the importer's rules only; `resolveRecord()`, hooks and database writes run in the real import. Rows are not de-duplicated against each other.
-- Filament imports do not run per-record policy checks – authorize in your importer if you need to.
+- Excel: one sheet per import. Cell values are read as displayed values; dates become `Y-m-d H:i:s`. `.xls` is loaded fully into memory by PhpSpreadsheet, so keep such files modest (use `.xlsx` for big files).
+- Browser uploads are bounded by your PHP / Livewire limits (`upload_max_filesize`, `post_max_size`, `livewire.temporary_file_upload`) — use the console command beyond that.
+- Review validates against the importer's rules and your `RowCheck`s; `resolveRecord()`, hooks and database writes happen in the real import.
+- Filament imports do not run per-record policy checks – authorize inside your importer if you need to.
 
-## Testing
+## Development
 
 ```bash
 composer install
-vendor/bin/pest
+composer check          # PHPStan level 10 + Pest
 ```
 
 ## License
 
-MIT
+Proprietary — see `LICENSE`.

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace SolutionForest\FilamentImportWizard\Support;
 
 use Generator;
@@ -37,7 +39,7 @@ class CsvSource
     }
 
     /**
-     * @return array<int, string>
+     * @return list<string>
      */
     public function getHeaders(): array
     {
@@ -50,7 +52,7 @@ class CsvSource
                 return [];
             }
 
-            return array_map(fn ($header): string => trim((string) $header), $headers);
+            return array_map(fn (?string $header): string => trim((string) $header), $headers);
         } finally {
             fclose($stream);
         }
@@ -75,8 +77,8 @@ class CsvSource
     /**
      * Read up to $limit data rows starting at $offset, keyed by header.
      *
-     * @param  array<int, string>  $headers
-     * @return Generator<int, array<string, string|null>, mixed, int> returns the offset after the last row read
+     * @param  list<string>  $headers
+     * @return Generator<int, array<string, string>, mixed, int> returns the offset after the last row read
      */
     public function read(array $headers, int $offset, int $limit): Generator
     {
@@ -93,9 +95,9 @@ class CsvSource
                     continue;
                 }
 
-                $record = array_slice(array_pad($record, $count, null), 0, $count);
+                $values = array_map(fn (?string $value): string => $value ?? '', array_slice(array_pad($record, $count, ''), 0, $count));
 
-                yield array_combine($headers, $record);
+                yield array_combine($headers, $values);
 
                 $read++;
                 $offset = (int) ftell($stream);
@@ -176,7 +178,7 @@ class CsvSource
             throw new RuntimeException("Unable to open [{$this->path}] on disk [{$this->disk}].");
         }
 
-        $isSeekable = stream_get_meta_data($stream)['seekable'] ?? false;
+        $isSeekable = stream_get_meta_data($stream)['seekable'];
 
         // Skip the UTF-8 byte order mark that Excel adds to exports.
         if ($offset === 0 && fread($stream, 3) !== "\xEF\xBB\xBF") {
