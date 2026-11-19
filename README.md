@@ -24,6 +24,7 @@ every row, submit for approval, approve, and read the audit trail. Chapters and 
 - **One rules class** for Filament forms *and* imports.
 - **Optional audit trail and approval step** (maker–checker).
 - **Translated** — English, 简体中文, 繁體中文 (TW / HK); add your own locale in minutes.
+- **Stress-tested** — 50,000 and 200,000 rows with flat memory ([results](docs/performance.md)).
 - Multi-panel, multi-server, Horizon and Octane friendly. PHPStan level 10.
 
 ## Supported versions
@@ -34,7 +35,7 @@ every row, submit for approval, approve, and read the audit trail. Chapters and 
 | 0.2 – 0.5 | 8.2 – 8.4 ¹ | 12 · 13 | 5.x | 4.x | Superseded — upgrade to 0.6 |
 | — | — | — | 3.x · 4.x | — | Not supported (built on Filament 5's importer and schema APIs) |
 
-✅ = the full test suite (Pest, 49 tests) passes on it · ¹ run on PHP 8.4; 8.2 and 8.3 are allowed by the constraints but were not run ·
+✅ = the full test suite (Pest, 49 tests + stress suite) passes on it · ¹ run on PHP 8.4; 8.2 and 8.3 are allowed by the constraints but were not run ·
 ² allowed by Filament 5, not run — every Laravel 11.x release is currently flagged by Composer security advisories, so upgrade to 12+.
 
 | Environment | Status |
@@ -94,6 +95,7 @@ $panel->plugin(ImportWizardPlugin::make()->pages([ImportContacts::class]));
 | [Scaling](docs/scaling.md) | Several servers, Horizon, Octane |
 | [Configuration](docs/configuration.md) | Every option in one place |
 | [Localization](docs/localization.md) | Languages, overriding texts, adding a locale |
+| [Performance](docs/performance.md) | Stress test results (50k–200k rows) and how to run them |
 | [Video tutorial](docs/video-tutorial.md) | Chapters and how it was recorded |
 
 ## Try the demo
@@ -109,6 +111,7 @@ Upload `workbench/samples/contacts.xlsx`. The [demo README](workbench/README.md)
 
 ```bash
 composer check     # PHPStan level 10 + Pest
+composer stress    # 50,000-row stress test (flat memory, exact counts)
 ```
 
 Proprietary — see [LICENSE](LICENSE).

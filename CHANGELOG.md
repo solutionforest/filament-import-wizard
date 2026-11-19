@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.6.0
+- Stress suite (`composer stress`, `IMPORT_WIZARD_STRESS_ROWS`) and `docs/performance.md`: 50k / 200k rows, flat memory, exact counts.
 - Full localization: audit page, status labels, error messages and JS messages moved to translation files; plural-aware counts, locale-aware numbers and dates, RTL-safe CSS.
 - New locales: `zh_CN`, `zh_TW`, `zh_HK`; `import-wizard-translations` publish tag; `getEntityLabel()` hook; tests guard key parity and hard-coded text.
 

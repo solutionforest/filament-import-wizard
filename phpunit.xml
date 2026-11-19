@@ -3,4 +3,9 @@
     <testsuites>
         <testsuite name="Unit"><directory>tests</directory></testsuite>
     </testsuites>
+    <groups>
+        <exclude>
+            <group>stress</group>
+        </exclude>
+    </groups>
 </phpunit>

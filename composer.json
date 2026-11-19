@@ -65,7 +65,8 @@
         "check": [
             "@analyse",
             "@test"
-        ]
+        ],
+        "stress": "pest --group=stress -d memory_limit=256M"
     },
     "suggest": {
         "phpoffice/phpspreadsheet": "Required to import legacy .xls files (loaded fully into memory, so keep those files modest)."
