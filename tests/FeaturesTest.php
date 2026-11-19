@@ -139,7 +139,7 @@ it('keeps uploads per panel: a path from another panel is rejected', function ()
         ->set('data.file', ['uuid' => 'staff-imports/staff/other.csv'])
         ->call('analyzeUpload')
         ->assertSet('step', 1);
-});
+})->group('security');
 
 it('runs a server-side import from the console, validating first', function () {
     $user = User::forceCreate(['name' => 'Admin']);

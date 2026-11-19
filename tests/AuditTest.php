@@ -89,7 +89,7 @@ it('holds the import for approval, then runs it as the uploader when a second us
 
     // A decided audit cannot be decided again.
     expect(fn () => $approvals->reject($audit, $checker, 'late'))->toThrow(AuthorizationException::class);
-});
+})->group('security');
 
 it('can reject a pending import, which then never runs', function () {
     $maker = User::forceCreate(['name' => 'Maker']);
@@ -105,7 +105,7 @@ it('can reject a pending import, which then never runs', function () {
     expect($audit->refresh()->status)->toBe(AuditStatus::Rejected)
         ->and($audit->decision_note)->toBe('wrong file')
         ->and(Contact::count())->toBe(0);
-});
+})->group('security');
 
 it('lets an approver decide from the audit page', function () {
     $maker = User::forceCreate(['name' => 'Maker']);
@@ -130,7 +130,7 @@ it('lets an approver decide from the audit page', function () {
 
     expect($audit->refresh()->status)->toBe(AuditStatus::Completed)
         ->and(Contact::count())->toBe(1);
-});
+})->group('security');
 
 it('is off by default: a panel without the audit option writes no audit records', function () {
     $this->actingAs(User::forceCreate(['name' => 'Maker']));

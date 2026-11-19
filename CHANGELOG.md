@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.2
+- CI: GitHub Actions for Pint, PHPStan level 10, the Pest matrix (PHP 8.2–8.4 × Laravel 12/13), a security job (security test group + `composer audit`), weekly deep checks (fuzz, mutation, stress) and Dependabot.
+- New security tests (`composer security`): XSS escaping of cell values / audit notes, out-of-order wizard calls, locked state of the slide-over, importer-option whitelisting, chunk-upload confinement, approval and audit visibility authorisation.
+- Hardening: only options the importer declares (`getOptionsFormComponents()`) are passed from the client-writable wizard state to the importer.
+
 ## 0.9.1
 - Docs: new screenshots of the slide-over (list button, upload, map, review, done, refreshed table) in the README and `docs/slide-over.md`; all other screenshots refreshed.
 - Video tutorial re-recorded (115 s) with a slide-over chapter and the Filament notifications.

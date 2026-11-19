@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+# Set the repository variable CI_RUNNER (Settings → Variables) to e.g. `self-hosted`
+# to run every job on your own runners; it defaults to GitHub-hosted Ubuntu.
+env:
+  RUNNER: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+
+jobs:
+  lint:
+    name: Code style (Pint)
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, pdo_sqlite, zip, gd, dom, fileinfo, simplexml, xmlreader, xmlwriter
+          coverage: none
+          tools: composer:v2
+      - uses: ramsey/composer-install@v3
+      - run: composer lint
+
+  phpstan:
+    name: PHPStan level 10
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, pdo_sqlite, zip, gd, dom, fileinfo, simplexml, xmlreader, xmlwriter
+          coverage: none
+          tools: composer:v2
+      - uses: ramsey/composer-install@v3
+      - run: composer analyse
+
+  tests:
+    name: Pest — PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }}
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { php: '8.2', laravel: '12', testbench: '^10.0', workbench: '^10.0' }
+          - { php: '8.3', laravel: '12', testbench: '^10.0', workbench: '^10.0' }
+          - { php: '8.4', laravel: '12', testbench: '^10.0', workbench: '^10.0' }
+          - { php: '8.3', laravel: '13', testbench: '^11.0', workbench: '^11.0' }
+          - { php: '8.4', laravel: '13', testbench: '^11.0', workbench: '^11.0' }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, intl, pdo_sqlite, zip, gd, dom, fileinfo, simplexml, xmlreader, xmlwriter
+          coverage: none
+          tools: composer:v2
+      - name: Pin Laravel ${{ matrix.laravel }}
+        run: |
+          composer require --dev --no-update --no-interaction \
+            "laravel/framework:^${{ matrix.laravel }}.0" \
+            "orchestra/testbench:${{ matrix.testbench }}" \
+            "orchestra/workbench:${{ matrix.workbench }}"
+      - uses: ramsey/composer-install@v3
+        with:
+          dependency-versions: highest
+          composer-options: --with-all-dependencies
+      - name: Pest (includes fuzz suites at their quick size)
+        run: vendor/bin/pest
+
+  security:
+    name: Security tests + dependency audit
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, pdo_sqlite, zip, gd, dom, fileinfo, simplexml, xmlreader, xmlwriter
+          coverage: none
+          tools: composer:v2
+      - uses: ramsey/composer-install@v3
+      - name: Security test group (XSS, path traversal, tampering, authorisation, uploads)
+        run: vendor/bin/pest --group=security
+      - name: Known vulnerabilities in dependencies
+        run: composer audit --locked || composer audit

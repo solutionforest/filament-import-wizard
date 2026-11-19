@@ -63,15 +63,22 @@
         "test": "pest",
         "analyse": "phpstan analyse --memory-limit=1G",
         "check": [
+            "@lint",
             "@analyse",
-            "@test"
+            "@test",
+            "@security"
         ],
         "stress": "pest --group=stress -d memory_limit=256M",
         "fuzz": [
             "@putenv IMPORT_WIZARD_FUZZ_CASES=300000",
             "pest tests/Fuzz tests/FastRulesTest.php"
         ],
-        "mutate": "@php workbench/tools/mutation-test.php"
+        "mutate": "@php workbench/tools/mutation-test.php",
+        "lint": "pint --test",
+        "security": [
+            "pest --group=security",
+            "@composer audit"
+        ]
     },
     "suggest": {
         "phpoffice/phpspreadsheet": "Required to import legacy .xls files (loaded fully into memory, so keep those files modest)."

@@ -62,7 +62,7 @@ it('blocks continuing while a required column is unmapped', function () {
         ->call('confirmMapping')
         ->assertHasErrors(['data.columnMap.name'])
         ->assertSet('step', 2);
-});
+})->group('security');
 
 it('rejects file paths outside the upload directory and tampered mappings', function () {
     $this->actingAs(User::forceCreate(['name' => 'Admin']));
@@ -82,13 +82,13 @@ it('rejects file paths outside the upload directory and tampered mappings', func
         ->set('data.columnMap.name', 'nonexistent')
         ->call('confirmMapping')
         ->assertSet('step', 2);
-});
+})->group('security');
 
 it('does not let the client set locked state', function () {
     $this->actingAs(User::forceCreate(['name' => 'Admin']));
 
     Livewire::test(ImportContacts::class)->set('filePath', '/etc/passwd');
-})->throws(CannotUpdateLockedPropertyException::class);
+})->throws(CannotUpdateLockedPropertyException::class)->group('security');
 
 it('previews the mapped rows live in Map and with their problems in Review', function () {
     $this->actingAs(User::forceCreate(['name' => 'Admin']));

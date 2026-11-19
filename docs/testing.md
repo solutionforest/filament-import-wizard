@@ -15,6 +15,23 @@ only ever says "certainly passes", and anything doubtful goes to Laravel — and
 | **E-mail soundness** | 40,000 generated addresses: the fast e-mail check never accepts one `email:rfc` rejects | `tests/FastRulesTest.php` |
 | **Mutation test** | 27 deliberately broken versions of the fast path (off-by-one limits, loose comparisons, removed guards, …) — the suite must fail for each | `workbench/tools/mutation-test.php` |
 
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every push and pull request:
+
+| Job | What |
+| --- | --- |
+| **Code style** | `composer lint` (Pint) |
+| **PHPStan level 10** | `composer analyse` (Larastan) |
+| **Pest matrix** | the full suite on PHP 8.2 / 8.3 / 8.4 × Laravel 12 / 13 (the combinations each Laravel supports), incl. the fuzz suites at their quick size |
+| **Security** | `pest --group=security` — XSS escaping, locked wizard state, out-of-order calls, importer-option whitelisting, chunk-upload confinement (traversal, allow-listed types, owner-only), approval / audit authorisation — plus `composer audit` for known vulnerabilities in dependencies |
+
+`.github/workflows/deep-checks.yml` runs weekly (and on demand): the 300,000-case differential fuzz, the mutation test (at most the 2 documented equivalent survivors)
+and the 50,000-row stress test. Dependabot opens weekly PRs for Composer and Actions updates.
+
+To run every job on your own runners set the repository variable `CI_RUNNER` (e.g. `self-hosted`); it defaults to GitHub-hosted Ubuntu. `composer check` runs the
+lint, analysis, tests and security checks locally in one go.
+
 ## Running
 
 ```bash

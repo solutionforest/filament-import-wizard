@@ -1,6 +1,7 @@
 # Filament Import Wizard
 
 <p align="center">
+  <a href="https://github.com/solutionforest/filament-import-wizard/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/solutionforest/filament-import-wizard/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="Version" src="https://img.shields.io/badge/version-0.9.1-4f46e5?style=flat-square">
   <img alt="PHP" src="https://img.shields.io/badge/PHP-8.2%20%E2%80%93%208.4-777bb4?style=flat-square&logo=php&logoColor=white">
   <img alt="Laravel" src="https://img.shields.io/badge/Laravel-12%20%7C%2013-ff2d20?style=flat-square&logo=laravel&logoColor=white">
@@ -133,8 +134,9 @@ Upload `workbench/samples/contacts.xlsx`. The [demo README](workbench/README.md)
 ## Development
 
 ```bash
-composer check     # PHPStan level 10 + Pest
+composer check     # Pint + PHPStan level 10 + Pest + security tests + composer audit
 composer stress    # 50,000-row stress test (flat memory, exact counts)
+composer security  # security tests (XSS, traversal, tampering, authorisation, uploads) + dependency audit
 composer fuzz      # 300,000-case differential fuzz of the fast validation path vs Laravel
 composer mutate    # mutation test of the fast path
 ```

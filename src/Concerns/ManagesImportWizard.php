@@ -899,7 +899,17 @@ trait ManagesImportWizard
      */
     protected function getImporterOptions(): array
     {
-        return collect($this->data)->except(['file', 'uploadedFileName', 'columnMap', 'sheet'])->all();
+        // `data` is client-writable: only pass on the options the importer itself declares
+        // (its getOptionsFormComponents()), never arbitrary keys.
+        $declared = [];
+
+        foreach ($this->importerClass()::getOptionsFormComponents() as $component) {
+            if (method_exists($component, 'getName') && is_string($name = $component->getName())) {
+                $declared[] = $name;
+            }
+        }
+
+        return collect($this->data)->only($declared)->all();
     }
 
     protected function source(): CsvSource

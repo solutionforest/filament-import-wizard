@@ -1,0 +1,66 @@
+name: Deep checks
+
+# The expensive confidence checks for the fast validation path and performance:
+# large differential fuzz against Laravel, mutation testing and the 50,000-row stress test.
+on:
+  schedule:
+    - cron: '17 3 * * 1'   # Mondays 03:17 UTC
+  workflow_dispatch:
+    inputs:
+      fuzz_cases:
+        description: 'Fuzz cases per test'
+        default: '300000'
+
+permissions:
+  contents: read
+
+jobs:
+  fuzz:
+    name: Differential fuzz vs Laravel
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, pdo_sqlite, zip, gd, dom, fileinfo, simplexml, xmlreader, xmlwriter
+          coverage: none
+          tools: composer:v2
+      - uses: ramsey/composer-install@v3
+      - run: IMPORT_WIZARD_FUZZ_CASES=${{ inputs.fuzz_cases || '300000' }} vendor/bin/pest tests/Fuzz tests/FastRulesTest.php
+
+  mutation:
+    name: Mutation test of the fast path
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, pdo_sqlite, zip, gd, dom, fileinfo, simplexml, xmlreader, xmlwriter
+          coverage: none
+          tools: composer:v2
+      - uses: ramsey/composer-install@v3
+      # Two mutants are known-equivalent (documented in docs/testing.md); everything else must be killed.
+      - run: |
+          php workbench/tools/mutation-test.php | tee mutation.log || true
+          survivors=$(grep -c SURVIVED mutation.log || true)
+          echo "survivors: $survivors (2 equivalent mutants expected)"
+          test "$survivors" -le 2
+
+  stress:
+    name: Stress test (50,000 rows)
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, pdo_sqlite, zip, gd, dom, fileinfo, simplexml, xmlreader, xmlwriter
+          coverage: none
+          tools: composer:v2
+      - uses: ramsey/composer-install@v3
+      - run: vendor/bin/pest --group=stress -d memory_limit=256M

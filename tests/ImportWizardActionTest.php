@@ -104,4 +104,4 @@ it('refuses anything that is not a Filament importer', function () {
     $this->actingAs(User::forceCreate(['name' => 'Admin']));
 
     Livewire::test(ImportWizardModal::class, ['importer' => stdClass::class]);
-})->throws(Exception::class, 'is not a Filament importer');
+})->throws(Exception::class, 'is not a Filament importer')->group('security');

@@ -44,7 +44,7 @@ it('keeps uploads private to the user who started them and rejects bad input', f
         ->and(fn () => $uploads->begin('evil.php', 10, 'u1'))->toThrow(InvalidArgumentException::class)
         ->and(fn () => $uploads->begin('big.csv', 10 * 1024 * 1024, 'u1', 1024))->toThrow(InvalidArgumentException::class)
         ->and(fn () => $uploads->complete('../../etc', 'u1'))->toThrow(InvalidArgumentException::class);
-});
+})->group('security');
 
 it('prunes abandoned uploads', function () {
     $uploads = new ChunkedUpload('imports', 'staff-imports/staff');
@@ -82,13 +82,13 @@ it('does not expose the endpoints on panels that did not enable them', function 
     config(['app.env' => 'local']);
 
     $this->postJson('/admin/import-wizard/upload/start', ['name' => 'a.csv', 'size' => 5])->assertNotFound();
-});
+})->group('security');
 
 it('rejects guests', function () {
     config(['app.env' => 'local']);
 
     $this->postJson('/staff/import-wizard/upload/start', ['name' => 'a.csv', 'size' => 5])->assertUnauthorized();
-});
+})->group('security');
 
 it('continues into the wizard once the browser reports a finished chunked upload', function () {
     $this->actingAs(User::forceCreate(['name' => 'Maker']));
