@@ -32,6 +32,7 @@ class ImportCommand extends Command
         {--sheet=0 : Zero-based sheet index for spreadsheets}
         {--chunk=500 : Rows per queued job}
         {--max-errors=20 : Failing rows to print}
+        {--no-fast : Validate every row with Laravel only (no compiled fast path)}
         {--dry-run : Validate only, do not import}
         {--force : Import the valid rows even when some rows fail validation}';
 
@@ -76,7 +77,7 @@ class ImportCommand extends Command
         $this->components->info(number_format($total).' rows, mapped: '.json_encode($map));
 
         $runKey = Str::random(16);
-        $validator = new RowValidator($importer, $map, [], [], $runKey);
+        $validator = new RowValidator($importer, $map, [], [], $runKey, fast: ! $this->option('no-fast'));
         $offset = $source->getDataStartOffset();
         $invalid = 0;
         $row = 0;

@@ -506,6 +506,7 @@ abstract class ImportWizardPage extends Page
             $this->getRowChecks(),
             $this->reviewToken,
             fresh: $this->reviewedRows === 0,
+            fast: $this->getPlugin()->usesFastValidation(),
         );
 
         $perRequest = $this->getRowsPerReviewRequest();
@@ -582,6 +583,7 @@ abstract class ImportWizardPage extends Page
             Filament::getAuthGuard(),
             $this->getPlugin()->getReviewQueue(),
             $this->getPlugin()->getReviewConnection(),
+            $this->getPlugin()->usesFastValidation(),
         );
     }
 

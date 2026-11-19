@@ -47,6 +47,7 @@ class ReviewSlice implements ShouldQueue
         public int $previewLimit,
         public int|string|null $userId = null,
         public ?string $guard = null,
+        public bool $fast = true,
     ) {
         $timeout = config('import-wizard.job_timeout', 600);
         $this->timeout = is_numeric($timeout) ? max(1, (int) $timeout) : 600;
@@ -81,7 +82,7 @@ class ReviewSlice implements ShouldQueue
     protected function review(): void
     {
         $rows = Slice::fromChunk($this->chunk)->rows();
-        $results = (new RowValidator($this->importer, $this->columnMap, $this->options))->validateMany($rows, $this->firstRow);
+        $results = (new RowValidator($this->importer, $this->columnMap, $this->options, fast: $this->fast))->validateMany($rows, $this->firstRow);
 
         $invalid = 0;
         $byColumn = [];

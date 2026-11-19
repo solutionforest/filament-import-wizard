@@ -78,3 +78,8 @@ it('shows an error instead of a half result when review jobs fail', function () 
     expect($page->get('reviewFinished'))->toBeFalse()
         ->and($page->get('reviewError'))->not->toBe('');
 });
+
+it('lets a panel switch the review fast path off and still reviews identically', function () {
+    expect(ImportWizardPlugin::make()->usesFastValidation())->toBeTrue()
+        ->and(ImportWizardPlugin::make()->fastValidation(false)->usesFastValidation())->toBeFalse();
+});

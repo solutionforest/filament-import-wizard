@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.1
+- Fast validation path: verified far more thoroughly — differential fuzz vs Laravel (random rule sets × hostile values; ~1.6M comparisons in the large run), exhaustive single/pair rule × value tables, e-mail and numeric boundary tables, whole-pipeline (messages, attributes, casts) and real-import comparisons, and a 27-mutant mutation test (`composer fuzz`, `composer mutate`; docs/testing.md).
+- **Fixed three correctness bugs found by it:** an empty array passed `required`; some long e-mail addresses were accepted that Laravel rejects; `INF` / exponent / over-precise numbers with `numeric` + `min`/`max` passed where Laravel throws.
+- `->fastValidation(false)` on the plugin and `--no-fast` on `import-wizard:run` turn the fast path off.
+
 ## 0.8.0
 - Review is ~19× faster: a compiled, conservative fast path (`FastRules`) decides "certainly passes" for common single-field rules natively; failures and anything unusual go to Laravel, so errors and messages are identical. 50k rows: 12.4 s → 0.65 s (77,000 rows/s); 200k rows: 49 s → 2.9 s.
 - `Concerns\ValidatesQuickly` for importers: the same fast path inside the real import (50k rows 18.8 s → 8.5 s).

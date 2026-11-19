@@ -161,6 +161,12 @@ final class FastRules
             $nullable = $nullable || $name === 'nullable';
         }
 
+        // Arrays, objects, resources: Laravel has special rules for them (an empty array fails `required`,
+        // `Countable`s, files …). The fast path does not model any of that.
+        if ($value !== null && ! is_scalar($value)) {
+            return false;
+        }
+
         $isBlank = $value === null || (is_string($value) && trim($value) === '');
 
         if ($isBlank) {
@@ -188,11 +194,13 @@ final class FastRules
                 'string' => is_string($value),
                 'integer' => is_int($value) || (is_string($value) && filter_var($value, FILTER_VALIDATE_INT) !== false),
                 'numeric' => is_numeric($value),
-                'min' => is_scalar($value) && mb_strlen((string) $value) >= (int) $parameters[0],
-                'max' => is_scalar($value) && mb_strlen((string) $value) <= (int) $parameters[0],
-                'min_numeric' => is_numeric($value) && $value + 0 >= (int) $parameters[0],
-                'max_numeric' => is_numeric($value) && $value + 0 <= (int) $parameters[0],
-                'in' => is_scalar($value) && in_array((string) $value, $parameters, true),
+                'min' => mb_strlen((string) $value) >= (int) $parameters[0],
+                'max' => mb_strlen((string) $value) <= (int) $parameters[0],
+                // Laravel compares these with arbitrary-precision numbers, which reject INF/NAN, exponents and
+                // padded strings: only plain decimals are decided here, everything else is Laravel's call.
+                'min_numeric' => self::isPlainDecimal($value) && (float) $value >= (int) $parameters[0],
+                'max_numeric' => self::isPlainDecimal($value) && (float) $value <= (int) $parameters[0],
+                'in' => in_array((string) $value, $parameters, true),
                 'email' => is_string($value) && self::isSafeEmail($value),
                 default => true, // required / nullable / bail / sometimes: handled above or no-ops here
             };
@@ -206,13 +214,28 @@ final class FastRules
     }
 
     /**
+     * A plain decimal with at most 15 significant digits: such a value converts to a double
+     * exactly enough that comparing it with an integer limit gives the same answer as Laravel's
+     * arbitrary-precision comparison. Exponents, padding, INF/NAN and longer numbers are left to Laravel.
+     */
+    private static function isPlainDecimal(bool|float|int|string $value): bool
+    {
+        $text = (string) $value;
+
+        return preg_match('/^-?\d+(?:\.\d+)?$/D', $text) === 1 && strlen((string) preg_replace('/\D/', '', $text)) <= 15;
+    }
+
+    /**
      * Accepts only addresses that RFC validation certainly accepts (plain
      * dot-atom local part, ordinary hostname with a letter-only TLD). Everything
      * else answers false so Laravel decides.
      */
     public static function isSafeEmail(string $email): bool
     {
-        return strlen($email) <= 254
+        // The RFC validator Laravel uses starts rejecting long domains well below the nominal 253
+        // characters (observed from ~135), so stay far inside the safe region.
+        return strlen($email) <= 180
+            && strlen($email) - (int) strrpos($email, '@') - 1 <= 100
             && preg_match('/^(?=.{1,64}@)[A-Za-z0-9]+(?:[._+-][A-Za-z0-9]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,24}$/D', $email) === 1;
     }
 }

@@ -35,6 +35,7 @@ class ParallelReview
         ?string $guard,
         ?string $queue = null,
         ?string $connection = null,
+        bool $fast = true,
     ): string {
         $this->forget($runKey);
 
@@ -45,7 +46,7 @@ class ParallelReview
         foreach ($source->plan($sliceRows) as $index => $slice) {
             $descriptor = new Slice($source->getDisk(), $source->getPath(), $source->getDelimiter(), $headers, $slice['offset'], $slice['count']);
 
-            $jobs[] = new ReviewSlice($runKey, $index, $firstRow, $descriptor->toChunk(), $importer, $columnMap, $options, $maxErrors, $previewLimit, $userId, $guard);
+            $jobs[] = new ReviewSlice($runKey, $index, $firstRow, $descriptor->toChunk(), $importer, $columnMap, $options, $maxErrors, $previewLimit, $userId, $guard, $fast);
             $firstRow += $slice['count'];
         }
 

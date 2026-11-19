@@ -35,7 +35,7 @@ every row, submit for approval, approve, and read the audit trail. Chapters and 
 | 0.2 – 0.7 | 8.2 – 8.4 ¹ | 12 · 13 | 5.x | 4.x | Superseded — upgrade to 0.8 |
 | — | — | — | 3.x · 4.x | — | Not supported (built on Filament 5's importer and schema APIs) |
 
-✅ = the full test suite (Pest, 58 tests + stress suite) passes on it · ¹ run on PHP 8.4; 8.2 and 8.3 are allowed by the constraints but were not run ·
+✅ = the full test suite (Pest, 75 tests + fuzz, mutation and stress suites) passes on it · ¹ run on PHP 8.4; 8.2 and 8.3 are allowed by the constraints but were not run ·
 ² allowed by Filament 5, not run — every Laravel 11.x release is currently flagged by Composer security advisories, so upgrade to 12+.
 
 | Environment | Status |
@@ -96,6 +96,7 @@ $panel->plugin(ImportWizardPlugin::make()->pages([ImportContacts::class]));
 | [Configuration](docs/configuration.md) | Every option in one place |
 | [Localization](docs/localization.md) | Languages, overriding texts, adding a locale |
 | [Performance](docs/performance.md) | Stress test results (50k–200k rows) and how to run them |
+| [Testing](docs/testing.md) | How the fast validation path is verified (fuzz, exhaustive, mutation) |
 | [Video tutorial](docs/video-tutorial.md) | Chapters and how it was recorded |
 
 ## Try the demo
@@ -112,6 +113,8 @@ Upload `workbench/samples/contacts.xlsx`. The [demo README](workbench/README.md)
 ```bash
 composer check     # PHPStan level 10 + Pest
 composer stress    # 50,000-row stress test (flat memory, exact counts)
+composer fuzz      # 300,000-case differential fuzz of the fast validation path vs Laravel
+composer mutate    # mutation test of the fast path
 ```
 
 Proprietary — see [LICENSE](LICENSE).

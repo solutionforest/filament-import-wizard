@@ -50,6 +50,8 @@ final class ImportWizardPlugin implements Plugin
 
     protected bool $parallelReview = false;
 
+    protected bool $fastValidation = true;
+
     protected ?string $reviewQueue = null;
 
     protected ?string $reviewConnection = null;
@@ -319,6 +321,23 @@ final class ImportWizardPlugin implements Plugin
     public function getReviewConnection(): ?string
     {
         return $this->reviewConnection;
+    }
+
+    /**
+     * Review's compiled fast path for common rules (see docs/testing.md). On by default; it
+     * only ever skips Laravel for rows that certainly pass. Turn it off for byte-for-byte
+     * Laravel validation in Review.
+     */
+    public function fastValidation(bool $enabled = true): static
+    {
+        $this->fastValidation = $enabled;
+
+        return $this;
+    }
+
+    public function usesFastValidation(): bool
+    {
+        return $this->fastValidation;
     }
 
     public function usesChunkedUploads(): bool

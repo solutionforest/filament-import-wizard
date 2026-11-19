@@ -21,7 +21,7 @@ a row; they can only store results, and the only storage in Review (the duplicat
    `email` / `email:rfc`, and any plain `ValidationRule` object (such as `PhoneNumber`) — are checked natively in a few microseconds. The fast path answers
    only one question, *"does this field certainly pass?"*, and is built never to be more permissive than Laravel: an unusual value, an unknown rule or any failure
    hands that row to Laravel's real validation, which also produces the messages. Results and messages are therefore **identical** with or without it
-   (a test compares 6,500 rows across a 45-value matrix, and fuzzes 40,000 e-mail addresses against `email:rfc`). Rules it can't reproduce (`regex`, `unique`/`exists`,
+   — verified against Laravel by ~1.6 million randomized comparisons, exhaustive rule × value tables, boundary tables and a 27-mutant mutation test, which also found and fixed three bugs in its first version; see [Testing](testing.md). Switch it off with `->fastValidation(false)`. Rules it can't reproduce (`regex`, `unique`/`exists`,
    closures, cross-field rules, `email:dns`…) stay with Laravel; an importer that overrides `validateData()` is left alone.
 2. **Faster real import.** Filament validates each row again inside the importer. Add `use ValidatesQuickly;` to the importer (one line) to give that step the same
    fast path — same errors, same messages.
