@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/Filament-5.x-FDAE4B" alt="Filament 5">
   <img src="https://img.shields.io/badge/PHPStan-level%2010-brightgreen?logo=php&logoColor=white" alt="PHPStan level 10">
   <a href="https://github.com/solutionforest/filament-import-wizard/actions/workflows/ci.yml"><img src="https://github.com/solutionforest/filament-import-wizard/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <img src="https://img.shields.io/badge/release-0.10.1-4f46e5" alt="Release 0.10.1">
+  <img src="https://img.shields.io/badge/release-0.11.0-4f46e5" alt="Release 0.11.0">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License: MIT">
 </p>
 
@@ -56,8 +56,8 @@ Chapters and how it was recorded: [docs/video-tutorial.md](docs/video-tutorial.m
 
 | Package | PHP | Laravel | Filament | Livewire | Status |
 | --- | --- | --- | --- | --- | --- |
-| **0.10.x** | 8.2 – 8.4 ¹ | **12** ✅ · **13** ✅ · 11.28+ ² | **5.x** (tested on 5.11) | 4.x (via Filament 5) | **Current** |
-| 0.2 – 0.9 | 8.2 – 8.4 ¹ | 12 · 13 | 5.x | 4.x | Superseded — upgrade to 0.10 |
+| **0.10 – 0.11** | 8.2 – 8.4 ¹ | **12** ✅ · **13** ✅ · 11.28+ ² | **5.x** (tested on 5.11) | 4.x (via Filament 5) | **Current** |
+| 0.2 – 0.9 | 8.2 – 8.4 ¹ | 12 · 13 | 5.x | 4.x | Superseded — upgrade to 0.11 |
 | — | — | — | 3.x · 4.x | — | Not supported (built on Filament 5's importer and schema APIs) |
 
 ✅ = the full test suite (Pest, 113 tests + fuzz, mutation and stress suites) passes on it · ¹ run on PHP 8.4; 8.2 and 8.3 are allowed by the constraints but were not run ·
@@ -77,7 +77,7 @@ Release notes: [CHANGELOG.md](CHANGELOG.md).
 
 ```bash
 composer config repositories.filament-import-wizard vcs https://github.com/solutionforest/filament-import-wizard.git
-composer require solution-forest/filament-import-wizard:^0.10
+composer require solution-forest/filament-import-wizard:^0.11
 php artisan migrate
 ```
 

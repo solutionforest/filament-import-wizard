@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.11.0
+- **Open source**: the package is now public and released under the **MIT licence** (was proprietary / self-hosted only).
+- CI runs on GitHub-hosted runners only; the `CI_RUNNER` override is gone.
+- Docs: cover image in the README, Filament plugin directory kit (`art/filament-directory/`), logo, social preview and share images; the private-repository wording was removed.
+
 ## 0.10.1
 - **Interop verified with the real libraries**: files written by maatwebsite/excel (xlsx/csv/xls/ods), spatie/simple-excel, rap2hpoutre/fast-excel and box/spout 3 (nikazooz/laravel-simplesheet's engine) import cleanly, and our exports read back in each; xlswriter-format files (XlsxWriter fixtures) too. New CI `interop` job; `docs/interop.md`.
 - **Fixed**: formula cells were read as the formula text (`=D2*2`) instead of their cached result; legacy `.xls` dates arrived as Excel serial numbers and booleans as `TRUE` — now `Y-m-d H:i:s` and `1`/`0`.
