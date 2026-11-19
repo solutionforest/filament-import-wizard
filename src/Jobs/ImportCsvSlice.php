@@ -18,6 +18,9 @@ use SolutionForest\FilamentImportWizard\Support\Slice;
  */
 class ImportCsvSlice extends ImportCsv
 {
+    /** Seconds before the queue worker kills the slice (Horizon honours this per job). */
+    public int $timeout = 600;
+
     protected Slice $slice;
 
     /**
@@ -34,6 +37,9 @@ class ImportCsvSlice extends ImportCsv
         }
 
         $this->slice = Slice::fromChunk($descriptor);
+
+        $timeout = config('import-wizard.job_timeout', 600);
+        $this->timeout = is_numeric($timeout) ? max(1, (int) $timeout) : 600;
 
         parent::__construct($import, [], $columnMap, $options);
     }

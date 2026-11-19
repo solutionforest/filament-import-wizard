@@ -36,6 +36,11 @@ return [
         'submitted' => 'Submitted for approval',
         'hint' => 'The file was checked and is waiting for an approver. You will be notified when the import has run. Progress and history are in the Import audit page.',
     ],
+    'preview' => [
+        'map' => 'Preview — how the first rows will be imported',
+        'review' => 'First :count rows, checked',
+        'empty' => 'No rows to preview.',
+    ],
     'start_over' => 'Start over',
     'started_over' => 'Import reset',
 ];

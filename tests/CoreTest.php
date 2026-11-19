@@ -1,14 +1,17 @@
 <?php
 
+use Filament\Actions\Imports\Models\Import;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\Storage;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Writer\XLSX\Writer;
+use SolutionForest\FilamentImportWizard\Jobs\ImportCsvSlice;
 use SolutionForest\FilamentImportWizard\Support\ColumnMapper;
 use SolutionForest\FilamentImportWizard\Support\CsvSource;
 use SolutionForest\FilamentImportWizard\Support\FileNormalizer;
 use SolutionForest\FilamentImportWizard\Support\ImportStarter;
 use SolutionForest\FilamentImportWizard\Support\RowValidator;
+use SolutionForest\FilamentImportWizard\Support\Slice;
 use SolutionForest\FilamentImportWizard\Tests\Fixtures\Contact;
 use SolutionForest\FilamentImportWizard\Tests\Fixtures\ContactImporter;
 
@@ -102,4 +105,16 @@ it('converts the first sheet of an xlsx file to csv', function () {
 
     expect($source->getHeaders())->toBe(['name', 'email'])
         ->and($source->countRows())->toBe(2);
+});
+
+it('gives queued slices a timeout that Horizon honours and can be configured', function () {
+    $import = new Import;
+    $import->importer = ContactImporter::class;
+    $chunk = (new Slice('imports', 'a.csv', ',', ['a'], 0, 1))->toChunk();
+    $rows = base64_encode(serialize($chunk));
+
+    expect((new ImportCsvSlice($import, $rows, [], []))->timeout)->toBe(600);
+
+    config(['import-wizard.job_timeout' => 120]);
+    expect((new ImportCsvSlice($import, $rows, [], []))->timeout)->toBe(120);
 });

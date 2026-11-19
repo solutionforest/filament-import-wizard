@@ -29,6 +29,16 @@
     .iw-drop:hover, .iw-drop[data-over="true"] { border-color: var(--primary-600); background: color-mix(in srgb, var(--primary-600) 6%, transparent); }
     .dark .iw-drop { border-color: rgba(255,255,255,.2); }
     .iw-drop small { display: block; margin-top: .25rem; color: var(--gray-500); }
+    .iw-table-wrap { overflow-x: auto; }
+    .iw-table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+    .iw-table th { text-align: left; font-size: .75rem; letter-spacing: .03em; text-transform: uppercase; color: var(--gray-500); font-weight: 600; padding: .5rem .75rem; border-bottom: 1px solid var(--gray-200); white-space: nowrap; }
+    .iw-table td { padding: .5rem .75rem; border-bottom: 1px solid var(--gray-100); white-space: nowrap; max-width: 16rem; overflow: hidden; text-overflow: ellipsis; }
+    .dark .iw-table th, .dark .iw-table td { border-color: rgba(255,255,255,.1); }
+    .iw-table .iw-status { width: 2rem; text-align: center; font-weight: 700; }
+    .iw-table tr[data-bad="true"] .iw-status { color: var(--danger-600); }
+    .iw-table tr[data-bad="false"] .iw-status { color: var(--success-600); }
+    .iw-table td[data-error="true"] { background: color-mix(in srgb, var(--danger-600) 10%, transparent); color: var(--danger-600); }
+    .iw-table caption { text-align: left; padding: 0 .75rem .5rem; font-size: .875rem; font-weight: 500; }
     .iw-stack > * + * { margin-top: 1rem; }
 </style>
 

@@ -21,6 +21,17 @@
         @endif
     </x-filament::section>
 
+    @if ($livewire->previewRows)
+        <x-filament::section :compact="true">
+            @include('filament-import-wizard::steps.preview-table', [
+                'columns' => $livewire->getMappedColumns(),
+                'rows' => $livewire->previewRows,
+                'caption' => __('filament-import-wizard::import.preview.review', ['count' => count($livewire->previewRows)]),
+                'withStatus' => true,
+            ])
+        </x-filament::section>
+    @endif
+
     @if ($livewire->errorRows)
         <x-filament::section :compact="true">
             <ul class="iw-errors">

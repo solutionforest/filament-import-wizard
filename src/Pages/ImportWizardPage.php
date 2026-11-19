@@ -97,7 +97,7 @@ abstract class ImportWizardPage extends Page
     #[Locked]
     public array $headers = [];
 
-    /** @var list<array<string, string|null>> */
+    /** @var list<array<string, string>> */
     #[Locked]
     public array $sample = [];
 
@@ -127,6 +127,15 @@ abstract class ImportWizardPage extends Page
     /** @var array<string, int> */
     #[Locked]
     public array $errorsByColumn = [];
+
+    /**
+     * The first rows of the file as the importer will see them, with the
+     * problems found in each (Review step preview).
+     *
+     * @var list<array{row: int, values: array<string, string>, errors: array<string, list<string>>}>
+     */
+    #[Locked]
+    public array $previewRows = [];
 
     #[Locked]
     public ?int $importId = null;
@@ -232,10 +241,13 @@ abstract class ImportWizardPage extends Page
                     ->schema(fn (): array => array_map(
                         fn (ImportColumn $column): Select => $column->getSelect()
                             ->statePath('columnMap.'.$column->getName())
+                            ->live()
                             ->options(array_combine($this->headers, $this->headers))
                             ->helperText(fn (mixed $state): ?string => $this->describeSample(is_string($state) ? $state : null)),
                         $this->getImportColumns(),
                     )),
+                View::make('filament-import-wizard::steps.map-preview')
+                    ->visible(fn (): bool => $this->step === self::STEP_MAP),
                 View::make('filament-import-wizard::steps.map-actions')
                     ->visible(fn (): bool => $this->step === self::STEP_MAP),
                 View::make('filament-import-wizard::steps.review')
@@ -393,7 +405,7 @@ abstract class ImportWizardPage extends Page
         $this->delimiter = $source->getDelimiter();
         $allHeaders = $source->getHeaders();
         $this->headers = array_values(array_filter($allHeaders, fn (string $header): bool => $header !== ''));
-        $this->sample = iterator_to_array($source->read($allHeaders, $source->getDataStartOffset(), 5), false);
+        $this->sample = iterator_to_array($source->read($allHeaders, $source->getDataStartOffset(), $this->getPreviewLimit()), false);
 
         if ($this->headers === []) {
             $this->addError('data.file', __('filament-import-wizard::import.upload.empty'));
@@ -444,7 +456,7 @@ abstract class ImportWizardPage extends Page
         $this->totalRows = $source->countRows();
         $this->reviewOffset = $source->getDataStartOffset();
         $this->reviewedRows = $this->invalidRows = 0;
-        $this->errorRows = $this->errorsByColumn = [];
+        $this->errorRows = $this->errorsByColumn = $this->previewRows = [];
         $this->reviewFinished = false;
         $this->reviewToken = Str::random(16);
         $this->step = self::STEP_REVIEW;
@@ -479,6 +491,10 @@ abstract class ImportWizardPage extends Page
             $count++;
             $rowNumber = $this->reviewedRows + $count;
             $errors = $validator->validate($row, $rowNumber);
+
+            if ($rowNumber <= $this->getPreviewLimit()) {
+                $this->previewRows[] = ['row' => $rowNumber, 'values' => $this->mapRow($row, $this->getColumnMap()), 'errors' => $errors];
+            }
 
             if ($errors === []) {
                 continue;
@@ -609,11 +625,70 @@ abstract class ImportWizardPage extends Page
 
     public function startOver(): void
     {
-        $this->reset(['step', 'uploadPath', 'filePath', 'fileName', 'sheets', 'headers', 'sample', 'totalRows', 'reviewOffset', 'reviewedRows', 'invalidRows', 'reviewFinished', 'reviewToken', 'errorRows', 'errorsByColumn', 'importId', 'auditId', 'awaitingApproval']);
+        $this->reset(['step', 'uploadPath', 'filePath', 'fileName', 'sheets', 'headers', 'sample', 'totalRows', 'reviewOffset', 'reviewedRows', 'invalidRows', 'reviewFinished', 'reviewToken', 'errorRows', 'errorsByColumn', 'previewRows', 'importId', 'auditId', 'awaitingApproval']);
         $this->data = [];
         $this->content->fill();
 
         Notification::make()->title(__('filament-import-wizard::import.started_over'))->send();
+    }
+
+    protected function getPreviewLimit(): int
+    {
+        $limit = config('import-wizard.preview_rows', 10);
+
+        return is_numeric($limit) ? max(1, (int) $limit) : 10;
+    }
+
+    /**
+     * Importer column label => mapped file column, for the columns that have a mapping.
+     *
+     * @return array<string, string> importer column name => label
+     */
+    public function getMappedColumns(): array
+    {
+        $map = $this->getColumnMap();
+        $labels = [];
+
+        foreach ($this->getImportColumns() as $column) {
+            if (($map[$column->getName()] ?? '') !== '') {
+                $labels[$column->getName()] = $column->getLabel() ?? Str::headline($column->getName());
+            }
+        }
+
+        return $labels;
+    }
+
+    /**
+     * The first rows as the importer will receive them, for the Map step's live preview.
+     *
+     * @return list<array{row: int, values: array<string, string>, errors: array<string, list<string>>}>
+     */
+    public function getMapPreview(): array
+    {
+        $map = $this->getColumnMap();
+        $rows = [];
+
+        foreach ($this->sample as $index => $row) {
+            $rows[] = ['row' => $index + 1, 'values' => $this->mapRow($row, $map), 'errors' => []];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * @param  array<string, string>  $row  one file row keyed by file header
+     * @param  array<string, string>  $map  importer column => file header
+     * @return array<string, string> importer column => value
+     */
+    protected function mapRow(array $row, array $map): array
+    {
+        $values = [];
+
+        foreach ($map as $name => $header) {
+            $values[$name] = $row[$header] ?? '';
+        }
+
+        return $values;
     }
 
     public function describeSample(?string $header): ?string

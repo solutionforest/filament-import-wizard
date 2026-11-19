@@ -89,3 +89,35 @@ it('does not let the client set locked state', function () {
 
     Livewire::test(ImportContacts::class)->set('filePath', '/etc/passwd');
 })->throws(CannotUpdateLockedPropertyException::class);
+
+it('previews the mapped rows live in Map and with their problems in Review', function () {
+    $this->actingAs(User::forceCreate(['name' => 'Admin']));
+    Storage::disk('imports')->put('import-wizard/admin/p.csv', "Full Name,E-mail\nAna,ana@x.com\nBen,bad\nCy,cy@x.com\n");
+
+    $page = Livewire::test(ImportContacts::class)
+        ->set('data.file', ['uuid' => 'import-wizard/admin/p.csv'])
+        ->call('analyzeUpload');
+
+    $preview = $page->instance()->getMapPreview();
+
+    expect($page->instance()->getMappedColumns())->toBe(['name' => 'Name', 'email' => 'Email'])
+        ->and($preview)->toHaveCount(3)
+        ->and($preview[0]['values'])->toEqual(['name' => 'Ana', 'email' => 'ana@x.com']);
+
+    // Remapping changes the preview straight away.
+    $page->set('data.columnMap.name', 'E-mail');
+    expect($page->instance()->getMapPreview()[0]['values']['name'])->toBe('ana@x.com');
+    $page->set('data.columnMap.name', 'Full Name');
+
+    $page->call('confirmMapping')->call('reviewNextSlice');
+
+    $rows = $page->get('previewRows');
+
+    expect($rows)->toHaveCount(3)
+        ->and($rows[0]['errors'])->toBe([])
+        ->and($rows[1]['row'])->toBe(2)
+        ->and($rows[1]['values'])->toEqual(['name' => 'Ben', 'email' => 'bad'])
+        ->and($rows[1]['errors'])->toHaveKey('email');
+
+    $page->assertSee('First 3 rows, checked');
+});
