@@ -27,7 +27,7 @@ jobs:
           extensions: mbstring, intl, pdo_sqlite, zip, gd, dom, fileinfo, simplexml, xmlreader, xmlwriter
           coverage: none
           tools: composer:v2
-      - uses: ramsey/composer-install@v3
+      - uses: ramsey/composer-install@v4
       - run: IMPORT_WIZARD_FUZZ_CASES=${{ inputs.fuzz_cases || '300000' }} vendor/bin/pest tests/Fuzz tests/FastRulesTest.php
 
   mutation:
@@ -42,7 +42,7 @@ jobs:
           extensions: mbstring, intl, pdo_sqlite, zip, gd, dom, fileinfo, simplexml, xmlreader, xmlwriter
           coverage: none
           tools: composer:v2
-      - uses: ramsey/composer-install@v3
+      - uses: ramsey/composer-install@v4
       # Two mutants are known-equivalent (documented in docs/testing.md); everything else must be killed.
       - run: |
           php workbench/tools/mutation-test.php | tee mutation.log || true
@@ -62,5 +62,5 @@ jobs:
           extensions: mbstring, intl, pdo_sqlite, zip, gd, dom, fileinfo, simplexml, xmlreader, xmlwriter
           coverage: none
           tools: composer:v2
-      - uses: ramsey/composer-install@v3
+      - uses: ramsey/composer-install@v4
       - run: vendor/bin/pest --group=stress -d memory_limit=256M

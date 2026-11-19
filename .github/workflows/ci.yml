@@ -30,7 +30,7 @@ jobs:
           extensions: mbstring, intl, pdo_sqlite, zip, gd, dom, fileinfo, simplexml, xmlreader, xmlwriter
           coverage: none
           tools: composer:v2
-      - uses: ramsey/composer-install@v3
+      - uses: ramsey/composer-install@v4
       - run: composer lint
 
   phpstan:
@@ -44,7 +44,7 @@ jobs:
           extensions: mbstring, intl, pdo_sqlite, zip, gd, dom, fileinfo, simplexml, xmlreader, xmlwriter
           coverage: none
           tools: composer:v2
-      - uses: ramsey/composer-install@v3
+      - uses: ramsey/composer-install@v4
       - run: composer analyse
 
   tests:
@@ -73,7 +73,7 @@ jobs:
             "laravel/framework:^${{ matrix.laravel }}.0" \
             "orchestra/testbench:${{ matrix.testbench }}" \
             "orchestra/workbench:${{ matrix.workbench }}"
-      - uses: ramsey/composer-install@v3
+      - uses: ramsey/composer-install@v4
         with:
           dependency-versions: highest
           composer-options: --with-all-dependencies
@@ -91,7 +91,7 @@ jobs:
           extensions: mbstring, intl, pdo_sqlite, zip, gd, dom, fileinfo, simplexml, xmlreader, xmlwriter
           coverage: none
           tools: composer:v2
-      - uses: ramsey/composer-install@v3
+      - uses: ramsey/composer-install@v4
       - name: Security test group (XSS, path traversal, tampering, authorisation, uploads)
         run: vendor/bin/pest --group=security
       - name: Known vulnerabilities in dependencies
