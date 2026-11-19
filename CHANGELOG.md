@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.12.0
+- **Translatable fields**: `LocaleColumns::make('title', ['en', 'ar'])->columns()` turns `title_en` / `title_ar` file columns into one translated attribute — auto-mapped, validated per language, works with spatie/laravel-translatable or any array / JSON attribute; a blank cell never wipes an existing translation. `docs/translatable.md`.
+- **Fixed**: Excel files whose rows are padded with empty styled cells (up to 256 or 16,384 columns) no longer show dozens of blank file columns in the mapping step.
+- Queue connection / name per import: already supported through the importer's `getJobConnection()` / `getJobQueue()` (see `docs/scaling.md`); no new API needed.
+
 ## 0.11.0
 - **Open source**: the package is now public and released under the **MIT licence** (was proprietary / self-hosted only).
 - CI runs on GitHub-hosted runners only; the `CI_RUNNER` override is gone.

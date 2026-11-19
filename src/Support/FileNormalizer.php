@@ -191,8 +191,14 @@ class FileNormalizer
     {
         $values = array_map(fn (mixed $value): string => $this->format($value), array_values($cells));
 
+        // Spreadsheets pad rows with styled-but-empty cells (up to 256 columns, or 16k):
+        // drop the empty tail so it does not show up as dozens of blank file columns.
+        while ($values !== [] && end($values) === '') {
+            array_pop($values);
+        }
+
         // Skip fully blank rows, which spreadsheets pad with.
-        if (array_filter($values, fn (string $value): bool => $value !== '') === []) {
+        if ($values === []) {
             return;
         }
 
