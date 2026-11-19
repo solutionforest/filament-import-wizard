@@ -8,7 +8,7 @@
   <img alt="Filament" src="https://img.shields.io/badge/Filament-5.x-fdae4b?style=flat-square">
   <img alt="Livewire" src="https://img.shields.io/badge/Livewire-4.x-fb70a9?style=flat-square">
   <img alt="PHPStan" src="https://img.shields.io/badge/PHPStan-level%2010-4f5b93?style=flat-square">
-  <img alt="Tests" src="https://img.shields.io/badge/tests-112%20passing-2ea44f?style=flat-square">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-113%20passing-2ea44f?style=flat-square">
   <img alt="Fuzz and mutation tested" src="https://img.shields.io/badge/fast%20path-fuzz%20%2B%20mutation%20tested-2ea44f?style=flat-square">
   <img alt="Stress tested" src="https://img.shields.io/badge/stress-200k%20rows-2ea44f?style=flat-square">
   <img alt="Formats" src="https://img.shields.io/badge/files-CSV%20%C2%B7%20XLSX%20%C2%B7%20XLS%20%C2%B7%20ODS-0ea5e9?style=flat-square">
@@ -49,7 +49,7 @@ The same engine is a plain **API class**. It sits on top of Filament's own `Impo
 | 🏢 | **Multi-panel, multi-server** | Per-panel disk, directory and limits; shared-disk / database-backed state so any server can take any request; Horizon and Octane notes — [scaling](docs/scaling.md) |
 | 🌏 | **Translated** | English, 简体中文, 繁體中文 (TW / HK); plural-aware, locale-aware numbers and dates, RTL-safe — [localization](docs/localization.md) |
 | 🔒 | **Secure by default** | Locked wizard state, escaped output, confined uploads, allow-listed importer options, CSV formula guard on export; dedicated security tests and `composer audit` in CI |
-| 🧪 | **Quality gates** | PHPStan level 10, 112 Pest tests, security group, differential fuzz, mutation test, 50k–200k-row stress tests, CI matrix (PHP 8.2–8.4 × Laravel 12/13) — [testing](docs/testing.md) |
+| 🧪 | **Quality gates** | PHPStan level 10, 113 Pest tests, security group, differential fuzz, mutation test, 50k–200k-row stress tests, CI matrix (PHP 8.2–8.4 × Laravel 12/13) — [testing](docs/testing.md) |
 
 ## Video tutorial
 
@@ -67,7 +67,7 @@ Chapters and how it was recorded: [docs/video-tutorial.md](docs/video-tutorial.m
 | 0.2 – 0.9 | 8.2 – 8.4 ¹ | 12 · 13 | 5.x | 4.x | Superseded — upgrade to 0.10 |
 | — | — | — | 3.x · 4.x | — | Not supported (built on Filament 5's importer and schema APIs) |
 
-✅ = the full test suite (Pest, 112 tests + fuzz, mutation and stress suites) passes on it · ¹ run on PHP 8.4; 8.2 and 8.3 are allowed by the constraints but were not run ·
+✅ = the full test suite (Pest, 113 tests + fuzz, mutation and stress suites) passes on it · ¹ run on PHP 8.4; 8.2 and 8.3 are allowed by the constraints but were not run ·
 ² allowed by Filament 5, not run — every Laravel 11.x release is currently flagged by Composer security advisories, so upgrade to 12+.
 
 | Environment | Status |
