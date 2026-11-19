@@ -86,7 +86,7 @@ final class ImportWizardPlugin implements Plugin
      */
     public static function current(): self
     {
-        $panel = Filament::getCurrentOrDefaultPanel();
+        $panel = self::panel();
 
         if ($panel !== null && $panel->hasPlugin('import-wizard')) {
             $plugin = $panel->getPlugin('import-wizard');
@@ -97,6 +97,27 @@ final class ImportWizardPlugin implements Plugin
         }
 
         return new self;
+    }
+
+    /**
+     * The panel serving the request, or null outside any panel (an API route, a job, the console).
+     */
+    private static function panel(): ?Panel
+    {
+        // getDefaultPanel() throws when an app has no panel at all, so look for the default ourselves.
+        $current = Filament::getCurrentPanel();
+
+        if ($current instanceof Panel) {
+            return $current;
+        }
+
+        foreach (Filament::getPanels() as $panel) {
+            if ($panel->isDefault()) {
+                return $panel;
+            }
+        }
+
+        return null;
     }
 
     public function getId(): string
@@ -384,7 +405,7 @@ final class ImportWizardPlugin implements Plugin
      */
     public function getDirectory(?string $panelId = null): string
     {
-        $panelId ??= Filament::getCurrentOrDefaultPanel()?->getId();
+        $panelId ??= self::panel()?->getId();
 
         return $panelId === null ? $this->directory : $this->directory.'/'.$panelId;
     }

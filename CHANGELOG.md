@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.10.0
+- **Export**: `FileExport` and `ExportFileAction` — download records as Excel / CSV (or a blank template) in the importer's own layout, so an exported file imports straight back;
+  `verify()` runs the exported file through the importer's rules. Streams in chunks (50k rows in ~2.4 s, flat memory); CSV formula-injection guard that the importer removes again.
+- **Headless API**: `HeadlessImport` — the wizard's pipeline (normalise, map, review, import, audit) as a plain class for APIs, jobs and commands; `ReviewResult`, `ImportProgress`, `ImportBlockedException`.
+- `CsvSource` strips the CSV formula guard apostrophe; the plugin works outside any panel; export strings translated (en, zh_CN, zh_TW, zh_HK).
+- Tests: round-trip (xlsx / csv, tricky values), verify, template, formula guard, action; headless API suite; 50k export stress test. (110 tests.)
+
 ## 0.9.2
 - CI: GitHub Actions for Pint, PHPStan level 10, the Pest matrix (PHP 8.2–8.4 × Laravel 12/13), a security job (security test group + `composer audit`), weekly deep checks (fuzz, mutation, stress) and Dependabot.
 - New security tests (`composer security`): XSS escaping of cell values / audit notes, out-of-order wizard calls, locked state of the slide-over, importer-option whitelisting, chunk-upload confinement, approval and audit visibility authorisation.

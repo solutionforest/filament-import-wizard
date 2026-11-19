@@ -95,7 +95,7 @@ class CsvSource
                     continue;
                 }
 
-                $values = array_map(fn (?string $value): string => $value ?? '', array_slice(array_pad($record, $count, ''), 0, $count));
+                $values = array_map(fn (?string $value): string => self::unguard($value ?? ''), array_slice(array_pad($record, $count, ''), 0, $count));
 
                 yield array_combine($headers, $values);
 
@@ -165,6 +165,15 @@ class CsvSource
         }
 
         return $plan->getReturn();
+    }
+
+    /**
+     * Exports prefix values a spreadsheet could run as a formula (`=`, `+`, `-`, `@`) with an
+     * apostrophe; take that guard off again so an exported CSV imports back unchanged.
+     */
+    private static function unguard(string $value): string
+    {
+        return $value !== '' && $value[0] === "'" && isset($value[1]) && str_contains('=+-@', $value[1]) ? substr($value, 1) : $value;
     }
 
     /**

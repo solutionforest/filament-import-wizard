@@ -8,6 +8,8 @@ use OpenSpout\Common\Entity\Row;
 use OpenSpout\Writer\XLSX\Writer;
 use SolutionForest\FilamentImportWizard\Checks\Stores\SqliteSeenStore;
 use SolutionForest\FilamentImportWizard\Checks\UniqueInFile;
+use SolutionForest\FilamentImportWizard\Export\FileExport;
+use SolutionForest\FilamentImportWizard\Headless\HeadlessImport;
 use SolutionForest\FilamentImportWizard\Support\ChunkedUpload;
 use SolutionForest\FilamentImportWizard\Support\CsvSource;
 use SolutionForest\FilamentImportWizard\Support\FileNormalizer;
@@ -185,4 +187,20 @@ it('joins a large chunked upload without loading it', function () {
     stressReport(sprintf('chunked upload (%.1f MB)', strlen($content) / 1048576), $seconds, $mb, stressRows());
 
     expect(Storage::disk('imports')->size($path))->toBe(strlen($content));
+})->group('stress');
+
+it('exports and re-imports a large table in flat memory, round-tripping every row', function () {
+    $now = now()->toDateTimeString();
+    foreach (array_chunk(range(1, stressRows()), 1000) as $chunk) {
+        Contact::query()->insert(array_map(fn (int $i): array => ['name' => "Person {$i}", 'email' => "p{$i}@example.com", 'phone' => '+1 415 555 '.str_pad((string) ($i % 10000), 4, '0', STR_PAD_LEFT), 'created_at' => $now, 'updated_at' => $now], $chunk));
+    }
+
+    [$path, $seconds, $mb] = stressMeasure(fn (): string => FileExport::for(ContactImporter::class)->format('xlsx')->store('stress/export.xlsx', 'imports'));
+    stressReport('export to xlsx', $seconds, $mb, stressRows());
+    expect($mb)->toBeLessThan(48);
+
+    [$review, $seconds, $mb] = stressMeasure(fn () => HeadlessImport::for(ContactImporter::class)->file($path, 'imports')->autoMap()->review());
+    stressReport('re-review the exported xlsx', $seconds, $mb, stressRows());
+
+    expect($review->totalRows)->toBe(stressRows())->and($review->isValid())->toBeTrue()->and($mb)->toBeLessThan(48);
 })->group('stress');

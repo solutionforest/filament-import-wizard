@@ -37,7 +37,7 @@ dataset('locales', ['zh_CN', 'zh_TW', 'zh_HK']);
 it('ships every key of every group in each locale, with the same placeholders', function (string $locale) {
     $base = dirname(__DIR__).'/resources/lang';
 
-    foreach (['import', 'audit', 'errors', 'rules'] as $group) {
+    foreach (['import', 'audit', 'errors', 'rules', 'export'] as $group) {
         $english = flattenLang(require "{$base}/en/{$group}.php");
         $translated = flattenLang(require "{$base}/{$locale}/{$group}.php");
 
