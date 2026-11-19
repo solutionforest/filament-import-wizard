@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.0
+- **`ImportWizardAction`**: open the wizard in a slide-over from a resource page / table / widget, like Filament's own import action (`docs/slide-over.md`).
+- Optional Filament **notifications** for import start and finish (with a failed-rows link), `ImportWizardPlugin::notifications()` and `->notifications()` on the action; `import-wizard-finished` event to refresh tables.
+- The wizard logic moved into `Concerns\ManagesImportWizard`, shared by `ImportWizardPage` and the new `Livewire\ImportWizardModal` (no behaviour change for the page).
+- Demo: a Contacts list with the Import button.
+
 ## 0.8.2
 - Review: each request now keeps validating slices for up to a second (`getReviewTimeBudget()`), so a 50,000-row file is reviewed in one or two requests instead of one poll per slice (~1.9 s end to end in a browser).
 - Video tutorial re-recorded (80 s): adds the 50,000-row chunked upload + instant review and the Hong Kong Traditional Chinese interface; demo language switch `?lang=`.

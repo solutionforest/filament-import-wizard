@@ -47,6 +47,17 @@ return [
         'review' => '前 :count 行(已检查)',
         'empty' => '没有可预览的行。',
     ],
+    'notifications' => [
+        'started' => '导入已开始',
+        'started_body' => '正在导入「:file」中的 :count 行。',
+        'finished' => '导入完成',
+        'finished_body' => '已导入 :successful / :total 行。',
+        'download_failed' => '下载 :count 个失败的行',
+    ],
+    'action' => [
+        'label' => '导入',
+        'close' => '关闭',
+    ],
     'start_over' => '重新开始',
     'started_over' => '导入已重置',
 ];

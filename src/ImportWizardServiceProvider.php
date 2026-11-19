@@ -8,9 +8,11 @@ use Filament\Actions\Imports\Events\ImportCompleted;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 use SolutionForest\FilamentImportWizard\Audit\AuditRecorder;
 use SolutionForest\FilamentImportWizard\Console\ImportCommand;
 use SolutionForest\FilamentImportWizard\Console\PruneUploadsCommand;
+use SolutionForest\FilamentImportWizard\Livewire\ImportWizardModal;
 use SolutionForest\FilamentImportWizard\Models\ImportAudit;
 
 class ImportWizardServiceProvider extends ServiceProvider
@@ -37,6 +39,8 @@ class ImportWizardServiceProvider extends ServiceProvider
                 app(AuditRecorder::class)->completed($audit, $import);
             }
         });
+
+        Livewire::component('import-wizard-modal', ImportWizardModal::class);
 
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         $this->publishes([__DIR__.'/../config/import-wizard.php' => config_path('import-wizard.php')], 'import-wizard-config');

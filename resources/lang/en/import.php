@@ -42,6 +42,17 @@ return [
         'review' => '{1} First row, checked|[0,*] First :count rows, checked',
         'empty' => 'No rows to preview.',
     ],
+    'notifications' => [
+        'started' => 'Import started',
+        'started_body' => '{1} :count row from :file is being imported.|[0,*] :count rows from :file are being imported.',
+        'finished' => 'Import finished',
+        'finished_body' => ':successful of :total rows imported.',
+        'download_failed' => '{1} Download :count failed row|[0,*] Download :count failed rows',
+    ],
+    'action' => [
+        'label' => 'Import',
+        'close' => 'Close',
+    ],
     'start_over' => 'Start over',
     'started_over' => 'Import reset',
 ];

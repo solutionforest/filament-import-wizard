@@ -32,6 +32,10 @@ $panel->plugin(
 
 …or just `->pages([ImportContacts::class])` for the defaults.
 
+## As a button (slide-over)
+
+For a list page or table header use `ImportWizardAction` instead of a page — see [Slide-over action](slide-over.md).
+
 ## Several panels
 
 Register the plugin on each panel with its own settings. Settings come from the panel serving the request, uploads are

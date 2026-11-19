@@ -4,7 +4,7 @@
     $percent = $import && $import->total_rows ? min(100, $import->processed_rows / $import->total_rows * 100) : 0;
 @endphp
 
-<div @unless ($finished || $getLivewire()->awaitingApproval) wire:poll.1s @endunless>
+<div @unless ($finished && $getLivewire()->finishNotified || $getLivewire()->awaitingApproval) wire:poll.1s="pollImport" @endunless>
     <x-filament::section>
         @if ($getLivewire()->awaitingApproval)
             <p class="iw-row">{{ __('filament-import-wizard::import.approval.submitted') }}</p>

@@ -1,13 +1,13 @@
 # Filament Import Wizard
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-0.8.2-4f46e5?style=flat-square">
+  <img alt="Version" src="https://img.shields.io/badge/version-0.9.0-4f46e5?style=flat-square">
   <img alt="PHP" src="https://img.shields.io/badge/PHP-8.2%20%E2%80%93%208.4-777bb4?style=flat-square&logo=php&logoColor=white">
   <img alt="Laravel" src="https://img.shields.io/badge/Laravel-12%20%7C%2013-ff2d20?style=flat-square&logo=laravel&logoColor=white">
   <img alt="Filament" src="https://img.shields.io/badge/Filament-5.x-fdae4b?style=flat-square">
   <img alt="Livewire" src="https://img.shields.io/badge/Livewire-4.x-fb70a9?style=flat-square">
   <img alt="PHPStan" src="https://img.shields.io/badge/PHPStan-level%2010-4f5b93?style=flat-square">
-  <img alt="Tests" src="https://img.shields.io/badge/tests-75%20passing-2ea44f?style=flat-square">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-80%20passing-2ea44f?style=flat-square">
   <img alt="Fuzz and mutation tested" src="https://img.shields.io/badge/fast%20path-fuzz%20%2B%20mutation%20tested-2ea44f?style=flat-square">
   <img alt="Stress tested" src="https://img.shields.io/badge/stress-200k%20rows-2ea44f?style=flat-square">
   <img alt="Formats" src="https://img.shields.io/badge/files-CSV%20%C2%B7%20XLSX%20%C2%B7%20XLS%20%C2%B7%20ODS-0ea5e9?style=flat-square">
@@ -43,7 +43,7 @@ Chapters and how it was recorded: [docs/video-tutorial.md](docs/video-tutorial.m
 | 0.2 – 0.7 | 8.2 – 8.4 ¹ | 12 · 13 | 5.x | 4.x | Superseded — upgrade to 0.8 |
 | — | — | — | 3.x · 4.x | — | Not supported (built on Filament 5's importer and schema APIs) |
 
-✅ = the full test suite (Pest, 75 tests + fuzz, mutation and stress suites) passes on it · ¹ run on PHP 8.4; 8.2 and 8.3 are allowed by the constraints but were not run ·
+✅ = the full test suite (Pest, 80 tests + fuzz, mutation and stress suites) passes on it · ¹ run on PHP 8.4; 8.2 and 8.3 are allowed by the constraints but were not run ·
 ² allowed by Filament 5, not run — every Laravel 11.x release is currently flagged by Composer security advisories, so upgrade to 12+.
 
 | Environment | Status |
@@ -89,6 +89,15 @@ $panel->plugin(ImportWizardPlugin::make()->pages([ImportContacts::class]));
 
 **3. Open the page** — upload, map, review, import. That's it.
 
+Prefer a button on a list page? The same wizard opens in a **slide-over** with Filament notifications:
+
+```php
+protected function getHeaderActions(): array
+{
+    return [ImportWizardAction::make()->importer(ContactImporter::class)];
+}
+```
+
 ## Documentation
 
 | | |
@@ -96,6 +105,7 @@ $panel->plugin(ImportWizardPlugin::make()->pages([ImportContacts::class]));
 | [Installation](docs/installation.md) | Private repo, migrations, queue |
 | [Usage](docs/usage.md) | The page, the plugin, several panels |
 | [How it works](docs/how-it-works.md) | The four steps, mapping, preview |
+| [Slide-over action](docs/slide-over.md) | Open the wizard from a button, with start / done notifications |
 | [Rules](docs/rules.md) | One rules class for forms and imports; file-level checks |
 | [File formats](docs/file-formats.md) | CSV, Excel, encodings, sheets |
 | [Large files](docs/large-files.md) | Chunked upload, console import |

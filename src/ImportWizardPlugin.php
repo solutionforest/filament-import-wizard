@@ -52,6 +52,10 @@ final class ImportWizardPlugin implements Plugin
 
     protected bool $fastValidation = true;
 
+    protected bool $notifyOnStart = true;
+
+    protected bool $notifyOnFinish = true;
+
     protected ?string $reviewQueue = null;
 
     protected ?string $reviewConnection = null;
@@ -338,6 +342,29 @@ final class ImportWizardPlugin implements Plugin
     public function usesFastValidation(): bool
     {
         return $this->fastValidation;
+    }
+
+    /**
+     * Filament notifications around the import: a toast when it starts and one when it
+     * finishes (with a link to the failed rows). Both on by default; the finish toast is
+     * skipped on the `sync` queue, where Filament sends its own completion notification.
+     */
+    public function notifications(bool $onStart = true, bool $onFinish = true): static
+    {
+        $this->notifyOnStart = $onStart;
+        $this->notifyOnFinish = $onFinish;
+
+        return $this;
+    }
+
+    public function notifiesOnStart(): bool
+    {
+        return $this->notifyOnStart;
+    }
+
+    public function notifiesOnFinish(): bool
+    {
+        return $this->notifyOnFinish;
     }
 
     public function usesChunkedUploads(): bool

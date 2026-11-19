@@ -47,6 +47,17 @@ return [
         'review' => '前 :count 行(已檢查)',
         'empty' => '沒有可預覽的行。',
     ],
+    'notifications' => [
+        'started' => '匯入已開始',
+        'started_body' => '正在匯入「:file」中的 :count 行。',
+        'finished' => '匯入完成',
+        'finished_body' => '已匯入 :successful / :total 行。',
+        'download_failed' => '下載 :count 行失敗的資料',
+    ],
+    'action' => [
+        'label' => '匯入',
+        'close' => '關閉',
+    ],
     'start_over' => '重新開始',
     'started_over' => '匯入已重設',
 ];

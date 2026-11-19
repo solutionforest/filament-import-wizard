@@ -10,6 +10,7 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use SolutionForest\FilamentImportWizard\ImportWizardPlugin;
 use SolutionForest\FilamentImportWizard\Models\ImportAudit;
 use Workbench\App\Filament\Pages\ImportContacts;
+use Workbench\App\Filament\Resources\ContactResource;
 use Workbench\App\Http\DemoLogin;
 use Workbench\App\Models\User;
 
@@ -30,7 +31,8 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->homeUrl('/admin/import-contacts')
+            ->homeUrl('/admin/contacts')
+            ->resources([ContactResource::class])
             ->colors(['primary' => Color::Indigo])
             ->plugin(
                 ImportWizardPlugin::make()
