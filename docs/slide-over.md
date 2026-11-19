@@ -3,9 +3,13 @@
 The wizard is also available as a **Filament action** that opens it in a slide-over — from a resource list page, a table header, a widget or any page —
 the way Filament's own import action does, but with the Upload → Map → Review → Import flow, live preview and pre-import validation.
 
-| Open from the list page | The wizard in a slide-over | Finished, with notifications |
-| --- | --- | --- |
-| ![List](images/7-list-import-button.png) | ![Review](images/10-slideover-review.png) | ![Done](images/11-slideover-done.png) |
+| 1 · A button on the list page | 2 · Upload |
+| --- | --- |
+| ![List](images/7-list-import-button.png) | ![Upload](images/8-slideover-upload.png) |
+| **3 · Map, with live preview** | **4 · Review, with the row table** |
+| ![Map](images/9-slideover-map.png) | ![Review](images/10-slideover-review.png) |
+| **5 · Done — Filament notifications** | **6 · The table, up to date** |
+| ![Done](images/11-slideover-done.png) | ![List after import](images/12-list-after-import.png) |
 
 ## Add it
 

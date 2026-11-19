@@ -6,6 +6,8 @@
 | **3 · Review** | **4 · Submitted for approval** *(optional)* |
 | ![Review](images/3-review.png) | ![Approval](images/4-approval.png) |
 
+> The same four steps run as a full page or in a [slide-over](slide-over.md) opened from a button on a list page.
+
 ## 1. Upload
 Drop a CSV, XLSX, XLS or ODS file. Spreadsheets with several sheets ask which sheet to use; other encodings are
 converted to UTF-8; the delimiter is detected. See [File formats](file-formats.md). For files too big for a normal

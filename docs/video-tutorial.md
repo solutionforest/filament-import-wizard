@@ -2,14 +2,15 @@
 
 [![Tutorial preview](video/tutorial-preview.gif)](video/tutorial.mp4)
 
-**[Watch the tutorial (mp4, 80 s)](video/tutorial.mp4)** — recorded against the bundled demo with `workbench/samples/contacts.xlsx`
+**[Watch the tutorial (mp4, 115 s)](video/tutorial.mp4)** — recorded against the bundled demo with `workbench/samples/contacts-small.csv`, `contacts.xlsx`
 and a generated 50,000-row CSV.
 
 ## Chapters
 
 | # | Chapter | What you see |
 | --- | --- | --- |
-| 1 | **Upload** | Drop a CSV or Excel file |
+| 0 | **Slide-over** | An **Import** button on the Contacts list opens the wizard in a slide-over; upload → map → review → import with Filament start / done notifications; the table is up to date afterwards |
+| 1 | **Upload** | Drop a CSV or Excel file (full-page wizard from here) |
 | 2 | **Map** | Columns matched automatically; sample values; a live preview table of how the first rows will be imported |
 | 3 | **Review** | Every row checked with the importer's own rules before anything is written; bad cells highlighted, duplicates in the file caught |
 | 4 | **Approval** *(optional)* | "Submit for approval" — a second person releases the import |

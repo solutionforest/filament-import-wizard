@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.1
+- Docs: new screenshots of the slide-over (list button, upload, map, review, done, refreshed table) in the README and `docs/slide-over.md`; all other screenshots refreshed.
+- Video tutorial re-recorded (115 s) with a slide-over chapter and the Filament notifications.
+
 ## 0.9.0
 - **`ImportWizardAction`**: open the wizard in a slide-over from a resource page / table / widget, like Filament's own import action (`docs/slide-over.md`).
 - Optional Filament **notifications** for import start and finish (with a failed-rows link), `ImportWizardPlugin::notifications()` and `->notifications()` on the action; `import-wizard-finished` event to refresh tables.

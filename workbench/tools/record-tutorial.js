@@ -1,10 +1,10 @@
 // Records the tutorial clip against the running demo (composer serve), then convert with ffmpeg:
 //   npm i playwright
 //   python3 -c "print('Full Name,Work Email,Mobile,Position,Company'); [print(f'Person {i},' + (f'bad-{i}' if i%100==0 else f'p{i}@example.com') + f',+1 415 555 {i%10000:04d},Engineer,Acme') for i in range(1,50001)]" > /tmp/big-contacts.csv
-//   node workbench/tools/record-tutorial.js <output-dir> workbench/samples/contacts.xlsx /tmp/big-contacts.csv
+//   node workbench/tools/record-tutorial.js <output-dir> workbench/samples/contacts.xlsx /tmp/big-contacts.csv workbench/samples/contacts-small.csv
 //   ffmpeg -i <output-dir>/*.webm -c:v libx264 -crf 27 -pix_fmt yuv420p -movflags +faststart -an docs/video/tutorial.mp4
 const { chromium } = require('playwright');
-const [dir, file, bigFile] = process.argv.slice(2);
+const [dir, file, bigFile, smallFile] = process.argv.slice(2);
 const base = 'http://127.0.0.1:8765/admin';
 const wait = (p, ms) => p.waitForTimeout(ms);
 async function cap(p, title, sub) {
@@ -27,10 +27,35 @@ async function openUpload(p, query = '') {
   const ctx = await b.newContext({ viewport: { width: 1280, height: 720 }, recordVideo: { dir, size: { width: 1280, height: 720 } } });
   const p = await ctx.newPage();
 
-  // ---- Intro + the 4 steps with an Excel file
-  await openUpload(p, '?lang=en');
+  // ---- Intro
+  await p.goto(base + '/contacts?lang=en'); await p.waitForLoadState('networkidle'); await wait(p, 1200);
   await cap(p, 'Filament Import Wizard', 'Upload → Map → Review → Import · CSV &amp; Excel · any size');
   await wait(p, 3500);
+  // ---- Slide-over from a list page, with notifications
+  await p.goto(base + '/contacts?lang=en');
+  await p.waitForLoadState('networkidle'); await wait(p, 1500);
+  await cap(p, 'From any list page: a slide-over', 'One button on the Contacts table opens the whole wizard');
+  await wait(p, 3000);
+  await p.getByRole('button', { name: 'Import', exact: true }).click();
+  await p.waitForSelector('input[type=file]', { state: 'attached', timeout: 20000 }); await wait(p, 1500);
+  await cap(p, 'Slide-over import', 'Same wizard: upload → map → review → import');
+  await wait(p, 2500);
+  await p.setInputFiles('input[type=file]', smallFile);
+  await p.waitForSelector('text=Map columns', { timeout: 30000 }); await wait(p, 2500);
+  await p.click('button:has-text("Continue")');
+  await p.waitForSelector('text=All 12 rows checked', { timeout: 30000 }); await wait(p, 800);
+  await cap(p, 'Review before anything is written', '10 rows ready, 2 with problems — highlighted in the preview');
+  await wait(p, 3500);
+  await p.getByRole('button', { name: 'Import 10 rows' }).click();
+  await p.waitForSelector('text=Import finished', { timeout: 30000 }); await wait(p, 800);
+  await cap(p, 'Start → progress → done, with Filament notifications', 'Optional toasts; failed rows downloadable');
+  await wait(p, 4500);
+  await p.keyboard.press('Escape'); await wait(p, 6500);
+  await cap(p, 'The table is up to date', 'No page reload needed');
+  await wait(p, 3000);
+
+  // ---- The 4 steps with an Excel file, as a full page
+  await openUpload(p, '?lang=en');
   await cap(p, '1 · Upload', 'Drop a CSV, XLSX, XLS or ODS file');
   await wait(p, 2000);
   await p.setInputFiles('input[type=file]', file);

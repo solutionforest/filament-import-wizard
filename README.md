@@ -1,7 +1,7 @@
 # Filament Import Wizard
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-0.9.0-4f46e5?style=flat-square">
+  <img alt="Version" src="https://img.shields.io/badge/version-0.9.1-4f46e5?style=flat-square">
   <img alt="PHP" src="https://img.shields.io/badge/PHP-8.2%20%E2%80%93%208.4-777bb4?style=flat-square&logo=php&logoColor=white">
   <img alt="Laravel" src="https://img.shields.io/badge/Laravel-12%20%7C%2013-ff2d20?style=flat-square&logo=laravel&logoColor=white">
   <img alt="Filament" src="https://img.shields.io/badge/Filament-5.x-fdae4b?style=flat-square">
@@ -31,7 +31,7 @@ It sits on top of Filament's own `Importer` classes, so **your existing importer
 
 [![Watch the tutorial](docs/video/tutorial-preview.gif)](docs/video/tutorial.mp4)
 
-▶ **[Watch the tutorial (mp4, 80 s)](docs/video/tutorial.mp4)** — upload an Excel file, map columns with a live preview, review every row, submit for approval,
+▶ **[Watch the tutorial (mp4, 115 s)](docs/video/tutorial.mp4)** — the **slide-over** import from a list page with Filament notifications; then upload an Excel file, map columns with a live preview, review every row, submit for approval,
 approve and read the audit trail; then a **50,000-row file** (chunked upload, reviewed in about two seconds) and the interface in **Hong Kong Traditional Chinese**.
 Chapters and how it was recorded: [docs/video-tutorial.md](docs/video-tutorial.md).
 
@@ -97,6 +97,10 @@ protected function getHeaderActions(): array
     return [ImportWizardAction::make()->importer(ContactImporter::class)];
 }
 ```
+
+| Button on the list page | Map, in the slide-over | Review, in the slide-over | Done, with notifications |
+| --- | --- | --- | --- |
+| ![List](docs/images/7-list-import-button.png) | ![Map](docs/images/9-slideover-map.png) | ![Review](docs/images/10-slideover-review.png) | ![Done](docs/images/11-slideover-done.png) |
 
 ## Documentation
 
