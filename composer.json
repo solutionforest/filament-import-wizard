@@ -1,15 +1,26 @@
 {
     "name": "solution-forest/filament-import-wizard",
-    "description": "Self-hosted Filament v5 import wizard: Upload \u2192 Map \u2192 Review \u2192 Import. CSV, XLSX, ODS and XLS, huge files, pre-import validation, reusable rules, smart column mapping, multi-panel.",
+    "description": "Import and export CSV and Excel in Filament v5: a four-step upload, map, review, import wizard with live preview, row-by-row validation before import, huge-file support, round-trip export, audit/approval and a headless API.",
     "type": "library",
     "license": "proprietary",
     "keywords": [
         "filament",
+        "filament-plugin",
+        "filamentphp",
         "laravel",
+        "livewire",
         "import",
+        "export",
         "csv",
         "excel",
-        "wizard"
+        "xlsx",
+        "spreadsheet",
+        "importer",
+        "exporter",
+        "wizard",
+        "validation",
+        "bulk-import",
+        "data-import"
     ],
     "require": {
         "php": "^8.2",
@@ -87,6 +98,15 @@
         "rap2hpoutre/fast-excel": "Files written by Fast Excel import fine."
     },
     "support": {
-        "source": "https://github.com/solutionforest/filament-import-wizard"
-    }
+        "issues": "https://github.com/solutionforest/filament-import-wizard/issues",
+        "source": "https://github.com/solutionforest/filament-import-wizard",
+        "docs": "https://github.com/solutionforest/filament-import-wizard/tree/main/docs"
+    },
+    "homepage": "https://github.com/solutionforest/filament-import-wizard",
+    "authors": [
+        {
+            "name": "Solution Forest",
+            "homepage": "https://github.com/solutionforest"
+        }
+    ]
 }

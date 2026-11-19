@@ -1,0 +1,14 @@
+# Keep dist archives (composer require) small: ship the library, not the project scaffolding.
+/.github        export-ignore
+/art            export-ignore
+/docs           export-ignore
+/tests          export-ignore
+/workbench      export-ignore
+/testbench.yaml export-ignore
+/phpstan.neon   export-ignore
+/phpunit.xml    export-ignore
+/CONTRIBUTING.md export-ignore
+* text=auto eol=lf
+*.png binary
+*.gif binary
+*.mp4 binary

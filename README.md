@@ -1,55 +1,50 @@
-# Filament Import Wizard
-
+<p align="center"><img src="art/logo.svg" alt="Filament Import Wizard logo" width="120"></p>
+<h1 align="center">Filament Import Wizard</h1>
+<p align="center"><strong>Import and export CSV and Excel in Filament: map the columns, check every row, then import.</strong></p>
 <p align="center">
-  <a href="https://github.com/solutionforest/filament-import-wizard/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/solutionforest/filament-import-wizard/actions/workflows/ci.yml/badge.svg"></a>
-  <img alt="Version" src="https://img.shields.io/badge/version-0.10.1-4f46e5?style=flat-square">
-  <img alt="PHP" src="https://img.shields.io/badge/PHP-8.2%20%E2%80%93%208.4-777bb4?style=flat-square&logo=php&logoColor=white">
-  <img alt="Laravel" src="https://img.shields.io/badge/Laravel-12%20%7C%2013-ff2d20?style=flat-square&logo=laravel&logoColor=white">
-  <img alt="Filament" src="https://img.shields.io/badge/Filament-5.x-fdae4b?style=flat-square">
-  <img alt="Livewire" src="https://img.shields.io/badge/Livewire-4.x-fb70a9?style=flat-square">
-  <img alt="PHPStan" src="https://img.shields.io/badge/PHPStan-level%2010-4f5b93?style=flat-square">
-  <img alt="Tests" src="https://img.shields.io/badge/tests-113%20passing-2ea44f?style=flat-square">
-  <img alt="Fuzz and mutation tested" src="https://img.shields.io/badge/fast%20path-fuzz%20%2B%20mutation%20tested-2ea44f?style=flat-square">
-  <img alt="Stress tested" src="https://img.shields.io/badge/stress-200k%20rows-2ea44f?style=flat-square">
-  <img alt="Formats" src="https://img.shields.io/badge/files-CSV%20%C2%B7%20XLSX%20%C2%B7%20XLS%20%C2%B7%20ODS-0ea5e9?style=flat-square">
-  <img alt="Languages" src="https://img.shields.io/badge/i18n-en%20%C2%B7%20zh__CN%20%C2%B7%20zh__TW%20%C2%B7%20zh__HK-0ea5e9?style=flat-square">
-  <img alt="Horizon" src="https://img.shields.io/badge/Horizon-supported-0ea5e9?style=flat-square">
-  <img alt="Octane" src="https://img.shields.io/badge/Octane-reviewed-0ea5e9?style=flat-square">
-  <img alt="Multi-panel" src="https://img.shields.io/badge/panels-multi--panel-0ea5e9?style=flat-square">
-  <img alt="Distribution" src="https://img.shields.io/badge/distribution-self--hosted%20only-64748b?style=flat-square">
-  <img alt="License" src="https://img.shields.io/badge/license-proprietary-64748b?style=flat-square">
+  <img src="https://img.shields.io/badge/PHP-8.2%E2%80%938.4-777BB4?logo=php&logoColor=white" alt="PHP 8.2–8.4">
+  <img src="https://img.shields.io/badge/Laravel-12%E2%80%9313-FF2D20?logo=laravel&logoColor=white" alt="Laravel 12–13">
+  <img src="https://img.shields.io/badge/Filament-5.x-FDAE4B" alt="Filament 5">
+  <img src="https://img.shields.io/badge/PHPStan-level%2010-brightgreen?logo=php&logoColor=white" alt="PHPStan level 10">
+  <a href="https://github.com/solutionforest/filament-import-wizard/actions/workflows/ci.yml"><img src="https://github.com/solutionforest/filament-import-wizard/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <img src="https://img.shields.io/badge/release-0.10.1-4f46e5" alt="Release 0.10.1">
+  <img src="https://img.shields.io/badge/license-proprietary-lightgrey" alt="License: proprietary">
 </p>
 
-> Internal package — self-hosted distribution only (private repository, not on Packagist).
+> Internal package: self-hosted distribution only (private repository, not on Packagist).
 
-**Import and export for Filament v5 — done properly.** Upload a CSV or Excel file, map the columns, see **every row checked before anything is written**, then import it —
-in a full page or a **slide-over** from any list. Export the same data back to Excel / CSV in the layout the importer reads, so files **round-trip**. Need no screen at all?
-The same engine is a plain **API class**. It sits on top of Filament's own `Importer` classes, so **your existing importers work unchanged**.
+Your users have a spreadsheet; your Filament app needs the rows. This package gives you a four-step **Upload → Map → Review → Import** wizard for [Filament](https://filamentphp.com) v5 that accepts **CSV and Excel** files, shows **every row checked before anything is written**, and imports files of any size. It also **exports** a list back to Excel / CSV in the layout the importer reads, so files round-trip, and the same engine is available as a plain **API class** when you need no screen. It sits on top of Filament's own `Importer` classes, so **your existing importers work unchanged**.
 
-![The wizard: Review step with the row preview](docs/images/3-review.png)
+```text
+Upload a file → map the columns → review every row → import (queued) → export it back whenever you like
+```
+
+**You provide:** a Filament `Importer` (columns and rules), and where to put the button or page. **The package provides:** the wizard, the live preview, the validation (with a verified fast path), chunked uploads, export and templates, an optional audit trail and approval flow, and a headless API.
+
+![Filament Import Wizard: the Review step checks every row and highlights the problems before anything is imported](art/screenshots/hero-review.png)
 
 ## What you get
 
-| | Feature | |
-| --- | --- | --- |
-| 📥 | **Four-step import wizard** | Upload → Map → Review → Import, as a page or in a [slide-over](docs/slide-over.md) opened from a button on any list page, with optional start / done **Filament notifications** |
-| 📄 | **CSV, XLSX, XLS, ODS** | Multi-sheet workbooks, odd encodings (UTF-16, Windows-1252) and delimiters handled; typed cells (dates, booleans, formula results) read right — [file formats](docs/file-formats.md) |
-| 🤝 | **Works with your spreadsheet library** | Files from **maatwebsite/excel, spatie/simple-excel, rap2hpoutre/fast-excel**, the box/spout engine of nikazooz/laravel-simplesheet and xlswriter-format files import cleanly, and our exports read back in them — tested with the real libraries — [interop](docs/interop.md) |
-| 🧭 | **Smart column mapping** | Matched by name, label, aliases and fuzzy similarity; sample values under each field; required columns enforced |
-| 👀 | **Live preview tables** | See how the first rows will be imported while you map, and the first rows with ✓ / ✕ and highlighted problem cells in Review |
-| ✅ | **Check before you import** | Every row validated with your importer's own rules, with exact messages, error counts per column and the first failing rows — [how it works](docs/how-it-works.md) |
-| 🔁 | **One rules class for forms *and* imports** | Define a record's rules once (`FieldRules`) and use them in the Filament form, the importer and an API — [rules](docs/rules.md) |
-| 🧩 | **File-level checks** | e.g. duplicates inside the file, in constant memory (`UniqueInFile`) — [rules](docs/rules.md) |
-| ⚡ | **Fast** | A verified fast path validates **50,000 rows in under a second** (fuzz-, exhaustive- and mutation-tested against Laravel) — [performance](docs/performance.md) |
-| 🐘 | **Huge files** | Streamed, never loaded into memory; **resumable chunked upload** with no PHP size limit; a console command for multi-GB files — [large files](docs/large-files.md) |
-| 📤 | **Export that round-trips (互通)** | Excel / CSV download of any list (filters and sorting applied) in the importer's own layout, a blank **import template**, and `verify()` to prove the file would import cleanly — [export](docs/export.md) |
-| 🔌 | **Headless API** | `HeadlessImport` runs the same upload → map → review → import pipeline from an API endpoint, a job or a command — [headless API](docs/headless-api.md) |
-| 🧾 | **Audit trail** *(optional)* | Who imported what (file SHA-256, mapping, review result, outcome) with an immutable event history and an **Import audit** page — [audit](docs/audit-and-approval.md) |
-| 🛡️ | **Approval flow** *(optional)* | Maker–checker: hold an import for a second person, by rule (e.g. over 1,000 rows) — [audit & approval](docs/audit-and-approval.md) |
-| 🏢 | **Multi-panel, multi-server** | Per-panel disk, directory and limits; shared-disk / database-backed state so any server can take any request; Horizon and Octane notes — [scaling](docs/scaling.md) |
-| 🌏 | **Translated** | English, 简体中文, 繁體中文 (TW / HK); plural-aware, locale-aware numbers and dates, RTL-safe — [localization](docs/localization.md) |
-| 🔒 | **Secure by default** | Locked wizard state, escaped output, confined uploads, allow-listed importer options, CSV formula guard on export; dedicated security tests and `composer audit` in CI |
-| 🧪 | **Quality gates** | PHPStan level 10, 113 Pest tests, security group, differential fuzz, mutation test, 50k–200k-row stress tests, CI matrix (PHP 8.2–8.4 × Laravel 12/13) — [testing](docs/testing.md) |
+| Feature | What it does |
+| --- | --- |
+| **Four-step import wizard** | Upload → Map → Review → Import, as a page or in a [slide-over](docs/slide-over.md) opened from a button on any list page, with optional start / done **Filament notifications** |
+| **CSV, XLSX, XLS, ODS** | Multi-sheet workbooks, odd encodings (UTF-16, Windows-1252) and delimiters handled; typed cells (dates, booleans, formula results) read right — [file formats](docs/file-formats.md) |
+| **Works with your spreadsheet library** | Files from **maatwebsite/excel, spatie/simple-excel, rap2hpoutre/fast-excel**, the box/spout engine of nikazooz/laravel-simplesheet and xlswriter-format files import cleanly, and our exports read back in them — tested with the real libraries — [interop](docs/interop.md) |
+| **Smart column mapping** | Matched by name, label, aliases and fuzzy similarity; sample values under each field; required columns enforced |
+| **Live preview tables** | See how the first rows will be imported while you map, and the first rows with ✓ / ✕ and highlighted problem cells in Review |
+| **Check before you import** | Every row validated with your importer's own rules, with exact messages, error counts per column and the first failing rows — [how it works](docs/how-it-works.md) |
+| **One rules class for forms *and* imports** | Define a record's rules once (`FieldRules`) and use them in the Filament form, the importer and an API — [rules](docs/rules.md) |
+| **File-level checks** | e.g. duplicates inside the file, in constant memory (`UniqueInFile`) — [rules](docs/rules.md) |
+| **Fast** | A verified fast path validates **50,000 rows in under a second** (fuzz-, exhaustive- and mutation-tested against Laravel) — [performance](docs/performance.md) |
+| **Huge files** | Streamed, never loaded into memory; **resumable chunked upload** with no PHP size limit; a console command for multi-GB files — [large files](docs/large-files.md) |
+| **Export that round-trips (互通)** | Excel / CSV download of any list (filters and sorting applied) in the importer's own layout, a blank **import template**, and `verify()` to prove the file would import cleanly — [export](docs/export.md) |
+| **Headless API** | `HeadlessImport` runs the same upload → map → review → import pipeline from an API endpoint, a job or a command — [headless API](docs/headless-api.md) |
+| **Audit trail** *(optional)* | Who imported what (file SHA-256, mapping, review result, outcome) with an immutable event history and an **Import audit** page — [audit](docs/audit-and-approval.md) |
+| **Approval flow** *(optional)* | Maker–checker: hold an import for a second person, by rule (e.g. over 1,000 rows) — [audit & approval](docs/audit-and-approval.md) |
+| **Multi-panel, multi-server** | Per-panel disk, directory and limits; shared-disk / database-backed state so any server can take any request; Horizon and Octane notes — [scaling](docs/scaling.md) |
+| **Translated** | English, 简体中文, 繁體中文 (TW / HK); plural-aware, locale-aware numbers and dates, RTL-safe — [localization](docs/localization.md) |
+| **Secure by default** | Locked wizard state, escaped output, confined uploads, allow-listed importer options, CSV formula guard on export; dedicated security tests and `composer audit` in CI |
+| **Quality gates** | PHPStan level 10, 113 Pest tests, security group, differential fuzz, mutation test, 50k–200k-row stress tests, CI matrix (PHP 8.2–8.4 × Laravel 12/13) — [testing](docs/testing.md) |
 
 ## Video tutorial
 
