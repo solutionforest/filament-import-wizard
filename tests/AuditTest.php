@@ -10,6 +10,7 @@ use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
 use SolutionForest\FilamentImportWizard\Audit\ImportApprovals;
 use SolutionForest\FilamentImportWizard\Events\ImportAuditStatusChanged;
+use SolutionForest\FilamentImportWizard\ImportWizardPlugin;
 use SolutionForest\FilamentImportWizard\Models\AuditStatus;
 use SolutionForest\FilamentImportWizard\Models\ImportAudit;
 use SolutionForest\FilamentImportWizard\Pages\ImportAuditsPage;
@@ -129,4 +130,25 @@ it('lets an approver decide from the audit page', function () {
 
     expect($audit->refresh()->status)->toBe(AuditStatus::Completed)
         ->and(Contact::count())->toBe(1);
+});
+
+it('is off by default: a panel without the audit option writes no audit records', function () {
+    $this->actingAs(User::forceCreate(['name' => 'Maker']));
+
+    runWizard('plain', 'import-wizard/plain', "name,email\nAna,ana@x.com\n");
+
+    expect(ImportAudit::query()->count())->toBe(0)
+        ->and(Contact::count())->toBe(1);
+
+    Filament::setCurrentPanel(Filament::getPanel('plain'));
+    expect(ImportWizardPlugin::current()->isAuditEnabled())->toBeFalse()
+        ->and(Filament::getPanel('plain')->getPages())->not->toContain(ImportAuditsPage::class)
+        ->and(Filament::getPanel('admin')->getPages())->toContain(ImportAuditsPage::class);
+});
+
+it('switches auditing on when approval is required', function () {
+    expect(ImportWizardPlugin::make()->isAuditEnabled())->toBeFalse()
+        ->and(ImportWizardPlugin::make()->audit()->isAuditEnabled())->toBeTrue()
+        ->and(ImportWizardPlugin::make()->requireApproval()->isAuditEnabled())->toBeTrue()
+        ->and(ImportWizardPlugin::make()->requireApproval(false)->isAuditEnabled())->toBeFalse();
 });

@@ -48,7 +48,7 @@ final class ImportWizardPlugin implements Plugin
 
     protected bool $chunkedUploads = false;
 
-    protected bool $audit = true;
+    protected bool $audit = false;
 
     /** @var bool|Closure(ImportAudit): bool */
     protected bool|Closure $requireApproval = false;
@@ -164,8 +164,10 @@ final class ImportWizardPlugin implements Plugin
     }
 
     /**
-     * Record who imported what (file checksum, mapping, review result, outcome)
-     * in `import_wizard_audits`, with an immutable event trail. On by default.
+     * Opt in to the audit trail: who imported what (file checksum, mapping,
+     * review result, outcome) in `import_wizard_audits`, with an immutable event
+     * trail and an "Import audit" page. Off by default; {@see requireApproval()}
+     * switches it on because approval needs a record to approve.
      */
     public function audit(bool $enabled = true): static
     {
@@ -183,6 +185,7 @@ final class ImportWizardPlugin implements Plugin
     public function requireApproval(bool|Closure $condition = true): static
     {
         $this->requireApproval = $condition;
+        $this->audit = $this->audit || $condition !== false;
 
         return $this;
     }

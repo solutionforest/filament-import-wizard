@@ -13,11 +13,11 @@ class ContactImporter extends Importer
 
     public static function getColumns(): array
     {
-        return [
-            ImportColumn::make('name')->requiredMapping()->rules(['required', 'max:50']),
-            ImportColumn::make('email')->guess(['mail'])->rules(['required', 'email']),
+        return ContactRules::import([
+            ImportColumn::make('name')->requiredMapping(),
+            ImportColumn::make('email')->guess(['mail']),
             ImportColumn::make('phone'),
-        ];
+        ]);
     }
 
     public function resolveRecord(): ?Model

@@ -19,11 +19,11 @@ any size through Filament's own queued importer. It is built on Filament's `Impo
 ## Features
 
 - **CSV, XLSX, XLSM, ODS and XLS** – spreadsheets are streamed into a UTF-8 CSV (OpenSpout, constant memory); legacy `.xls` uses PhpSpreadsheet when installed. Multi-sheet workbooks ask which sheet to import. CSV in UTF-16 / Windows-1252 is transcoded automatically; the delimiter is auto-detected.
-- **Audit flow** – every run is recorded (who, which file + SHA-256, mapping, review result, outcome) with an immutable event trail, and imports can optionally be held for a second person's approval (maker–checker). See *Audit & approval*.
+- **Audit flow (optional)** – every run is recorded (who, which file + SHA-256, mapping, review result, outcome) with an immutable event trail, and imports can optionally be held for a second person's approval (maker–checker). See *Audit & approval*.
 - **Huge files, no browser limit** – never loaded into memory, and uploads are sent in small resumable chunks straight to the disk, so PHP's `upload_max_filesize` / `post_max_size` no longer cap the file size. See *Chunked uploads*.
 - **Huge files** – never loaded into memory. The file is addressed by byte offset, validated in polled slices and imported by one queued job per slice (`ImportCsvSlice`, a thin subclass of Filament's `ImportCsv`) whose payload is just an offset and a row count. For files too big for a browser upload there is a console command (below).
 - **Cross-check before the import starts** – Review dry-runs the importer's own *remap → cast → validate* pipeline over **every** row (nothing is saved) plus optional file-level checks such as duplicates, with live progress and the failing rows. Import unlocks when the check has finished.
-- **Reusable rules** – rules live in their own classes and rule sets instead of being re-typed in every importer (see below).
+- **One rules class for forms *and* imports** – define a record's rules once (`FieldRules`) and apply them to Filament form fields, importer columns and plain data (API / console), so they never drift apart (see below).
 - **Smart column mapping** – matched by name, label, `guess()` aliases, normalised names (`E-mail` ↔ `email`), trailing words (`Full name` ↔ `name`) and fuzzy similarity; a file column is used once; sample values are shown; required mappings are enforced.
 - **Multi-panel** – register it per panel with its own disk, directory and limits; uploads are kept per panel.
 - **Filament-native** – `FileUpload`, `ImportColumn::getSelect()`, schema components, `ImportDispatcher` (events, `imports` / `failed_import_rows` tables, failed-rows CSV, completion notification) and Filament's CSS variables, so it follows your panel theme and dark mode.
@@ -90,24 +90,65 @@ Register the plugin on each panel with its own settings. Settings are resolved f
 served on; each panel stores uploads under `{directory}/{panel-id}/` and a path from another panel's directory is
 rejected. A page class can be shared between panels.
 
-### Reusable rules
+### One rules class for forms and imports
 
-Validation does not have to be retyped in each importer. Use the rule sets, or the rule classes directly:
+Write what a record must look like **once**, then use it in the Filament form, the importer and anywhere else:
 
 ```php
 use SolutionForest\FilamentImportWizard\Rules\CommonRules;
+use SolutionForest\FilamentImportWizard\Rules\FieldRules;
+use SolutionForest\FilamentImportWizard\Rules\RuleContext;
 
-ImportColumn::make('email')->rules(CommonRules::email()),
-ImportColumn::make('phone')->rules(CommonRules::phone()),                 // optional phone
-ImportColumn::make('joined')->rules(CommonRules::date(formats: ['Y-m-d', 'd/m/Y'])),
-ImportColumn::make('status')->rules(CommonRules::oneOf(['active', 'archived'])),
-ImportColumn::make('age')->rules(CommonRules::integer(required: false, min: 0, max: 120)),
+class ContactRules extends FieldRules
+{
+    protected function define(RuleContext $context): array
+    {
+        return [
+            'name'  => CommonRules::name(max: 80),
+            'email' => [
+                ...CommonRules::email(),
+                // a form keeps e-mails unique (ignoring the record being edited);
+                // an import updates existing contacts, so it must not reject them
+                ...($context->isForm() ? [Rule::unique('contacts', 'email')->ignore($context->record)] : []),
+            ],
+            'phone' => CommonRules::phone(),
+        ];
+    }
+
+    public function messages(): array   { return ['email.email' => 'Please give a real e-mail address.']; }
+    public function attributes(): array { return ['phone' => 'phone number']; }
+}
 ```
 
-`CommonRules` also has `name()` and `url()`. Each method returns a plain list, so it can be merged with extra rules.
-The building blocks are ordinary Laravel `ValidationRule` classes you can use anywhere:
-`Rules\PhoneNumber`, `Rules\DateInFormats`, `Rules\OneOfIgnoringCase`. Write your own the same way and put it in a
-rule set of your app. Messages are translatable (`filament-import-wizard::rules`).
+```php
+// Filament form (resource or page) – rules, required asterisk, messages and attribute names are applied by field name
+public static function form(Schema $schema): Schema
+{
+    return $schema->components(ContactRules::form([
+        TextInput::make('name'),
+        TextInput::make('email'),
+        TextInput::make('phone'),
+    ]));
+}
+
+// Importer – the same definition, by column name
+public static function getColumns(): array
+{
+    return ContactRules::import([
+        ImportColumn::make('name')->requiredMapping(),
+        ImportColumn::make('email')->guess(['mail']),
+        ImportColumn::make('phone'),
+    ]);
+}
+
+// Anywhere else (API controller, console command, test)
+$data = ContactRules::make()->validate($request->all(), record: $contact);
+```
+
+- `RuleContext` lets one definition adapt: `$context->isForm()` / `isImport()`, `$context->record` (the record being edited; resolved lazily in forms, so edit pages get `unique()->ignore()` for free) and `isEditing()`.
+- Fields are matched by name; fields without rules are left untouched. `'required'` also marks the form field required (asterisk).
+- For the importer's own messages return `ContactRules::make()->messages()` from `getValidationMessages()`.
+- The building blocks are plain Laravel rules, so they work in any validator: `CommonRules::email() / phone() / name() / url() / integer() / date() / oneOf()` and the `ValidationRule` classes `Rules\PhoneNumber`, `Rules\DateInFormats`, `Rules\OneOfIgnoringCase` (translatable messages in `filament-import-wizard::rules`). Write your own `ValidationRule` and drop it into a definition.
 
 ### File-level checks (duplicates in the file)
 
@@ -144,11 +185,11 @@ ImportWizardPlugin::make()->pages([ImportContacts::class])->chunkedUploads()->ma
 
 ### Audit & approval
 
-Auditing is **on by default** (migrations are auto-loaded; run `php artisan migrate`). Each run gets an
+Auditing is **optional and off by default**. Switch it on per panel with `->audit()` (requiring approval switches it on too) and run `php artisan migrate` (the migrations are auto-loaded). Each audited run gets an
 `import_wizard_audits` row — user, panel, importer, file name, **SHA-256 of the uploaded file**, IP, mapping, options,
 row counts, review summary, the resulting Filament `Import`, imported / failed counts — plus an append-only
 `import_wizard_audit_events` trail (`uploaded → reviewed → [pending_approval → approved|rejected] → importing → completed[_with_failures]`).
-The **Import audit** page (registered automatically on the panel) lists them with filters and a History modal.
+The **Import audit** page (registered on the panel only when auditing is on) lists them with filters and a History modal.
 Every transition also fires `ImportAuditStatusChanged`, so you can forward it to your activity log / SIEM / chat:
 
 ```php
@@ -171,7 +212,7 @@ With approval on, the last wizard button becomes **Submit for approval**: the fi
 written. An approver opens *Import audit* and approves (the import then runs **as the original uploader**, so their
 completion notification and failed-rows download stay theirs) or rejects with a reason. Without closures, approval
 follows the `approve-imports` Gate ability and viewing follows `view-all-import-audits` when you define them, else any panel user.
-Disable everything with `->audit(false)`.
+Without `->audit()` / `->requireApproval()` nothing is recorded, no page is added and no tables are touched.
 
 ### Running on several servers
 

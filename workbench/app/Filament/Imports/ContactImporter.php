@@ -6,8 +6,8 @@ use Filament\Actions\Imports\ImportColumn;
 use Filament\Actions\Imports\Importer;
 use Filament\Actions\Imports\Models\Import;
 use Illuminate\Database\Eloquent\Model;
-use SolutionForest\FilamentImportWizard\Rules\CommonRules;
 use Workbench\App\Models\Contact;
+use Workbench\App\Rules\ContactRules;
 
 class ContactImporter extends Importer
 {
@@ -15,13 +15,13 @@ class ContactImporter extends Importer
 
     public static function getColumns(): array
     {
-        return [
-            ImportColumn::make('name')->requiredMapping()->rules(CommonRules::name(max: 80)),
-            ImportColumn::make('email')->guess(['mail', 'email address'])->requiredMapping()->rules(CommonRules::email()),
-            ImportColumn::make('phone')->guess(['mobile', 'tel'])->rules(CommonRules::phone()),
+        return ContactRules::import([
+            ImportColumn::make('name')->requiredMapping(),
+            ImportColumn::make('email')->guess(['mail', 'email address'])->requiredMapping(),
+            ImportColumn::make('phone')->guess(['mobile', 'tel']),
             ImportColumn::make('job_title')->label('Job title')->guess(['position', 'role']),
             ImportColumn::make('company'),
-        ];
+        ]);
     }
 
     public function resolveRecord(): ?Model

@@ -4,11 +4,12 @@ namespace SolutionForest\FilamentImportWizard\Tests\Fixtures;
 
 use Filament\Panel;
 use Filament\PanelProvider;
+use SolutionForest\FilamentImportWizard\ImportWizardPlugin;
 
 class TestPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        return $panel->default()->id('admin')->path('admin')->pages([ImportContacts::class]);
+        return $panel->default()->id('admin')->path('admin')->plugin(ImportWizardPlugin::make()->pages([ImportContacts::class])->audit());
     }
 }

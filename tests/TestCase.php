@@ -40,6 +40,7 @@ abstract class TestCase extends Orchestra
             ImportWizardServiceProvider::class,
             Fixtures\TestPanelProvider::class,
             Fixtures\StaffPanelProvider::class,
+            Fixtures\PlainPanelProvider::class,
         ];
     }
 
