@@ -6,10 +6,13 @@ namespace SolutionForest\FilamentImportWizard\Support;
 
 use Filament\Actions\Imports\Importer;
 use Filament\Actions\Imports\Models\Import;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use LogicException;
+use ReflectionMethod;
 use ReflectionProperty;
 use SolutionForest\FilamentImportWizard\Checks\RowCheck;
+use SolutionForest\FilamentImportWizard\Concerns\ValidatesQuickly;
 use Throwable;
 
 /**
@@ -22,13 +25,22 @@ class RowValidator
 {
     protected Importer $importer;
 
+    /** Compiled pre-check; null when disabled or the importer customises validateData(). */
+    protected ?FastRules $fast = null;
+
+    /** @var array<string, string> */
+    protected array $messages = [];
+
+    /** @var array<string, string> */
+    protected array $attributes = [];
+
     /**
      * @param  class-string<Importer>  $importer
      * @param  array<string, string>  $columnMap
      * @param  array<string, mixed>  $options
      * @param  list<RowCheck>  $checks
      */
-    public function __construct(string $importer, array $columnMap, array $options = [], protected array $checks = [], string $runKey = '', bool $fresh = true)
+    public function __construct(string $importer, array $columnMap, array $options = [], protected array $checks = [], string $runKey = '', bool $fresh = true, bool $fast = true)
     {
         $instance = app($importer, [
             'import' => new Import,
@@ -41,6 +53,16 @@ class RowValidator
         }
 
         $this->importer = $instance;
+
+        // An importer that overrides validateData() has custom validation we must not bypass.
+        $declaring = (new ReflectionMethod($instance, 'validateData'))->getDeclaringClass();
+        $customValidation = $declaring->getName() !== Importer::class && ! in_array(ValidatesQuickly::class, class_uses($instance) ?: [], true);
+
+        if ($fast && ! $customValidation) {
+            $this->fast = FastRules::compile($instance->getValidationRules());
+            $this->messages = $instance->getValidationMessages();
+            $this->attributes = $instance->getValidationAttributes();
+        }
 
         foreach ($this->checks as $check) {
             $check->begin($runKey, $fresh);
@@ -104,6 +126,15 @@ class RowValidator
             $data = $this->getData($row);
             $errors = [];
 
+            // Fast path: if every compiled field certainly passes, only the fields it
+            // cannot judge go to Laravel. Anything failing (or doubtful) takes the full,
+            // original path below, so messages are exactly Laravel's.
+            if ($this->fast instanceof FastRules && $this->fast->passes($data)) {
+                $slow = $this->fast->slowRules();
+
+                return [$slow === [] ? [] : $this->laravelErrors($data, $slow), $data];
+            }
+
             try {
                 $this->importer->validateData();
             } catch (ValidationException $exception) {
@@ -114,6 +145,18 @@ class RowValidator
         } catch (Throwable $exception) {
             return [['_row' => [$exception->getMessage()]], $row];
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @param  array<string, array<mixed>>  $rules
+     * @return array<string, list<string>>
+     */
+    protected function laravelErrors(array $data, array $rules): array
+    {
+        $validator = Validator::make($data, $rules, $this->messages, $this->attributes);
+
+        return $validator->fails() ? $this->normalize($validator->errors()->messages()) : [];
     }
 
     /**

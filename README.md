@@ -24,18 +24,18 @@ every row, submit for approval, approve, and read the audit trail. Chapters and 
 - **One rules class** for Filament forms *and* imports.
 - **Optional audit trail and approval step** (maker–checker).
 - **Translated** — English, 简体中文, 繁體中文 (TW / HK); add your own locale in minutes.
-- **Stress-tested** — 50,000 and 200,000 rows with flat memory; Review of 50k rows in ~9 s on one core, parallel on the queue ([results](docs/performance.md)).
+- **Stress-tested** — 50,000 and 200,000 rows with flat memory; Review of 50,000 rows in under a second ([results](docs/performance.md)).
 - Multi-panel, multi-server, Horizon and Octane friendly. PHPStan level 10.
 
 ## Supported versions
 
 | Package | PHP | Laravel | Filament | Livewire | Status |
 | --- | --- | --- | --- | --- | --- |
-| **0.7.x** | 8.2 – 8.4 ¹ | **12** ✅ · **13** ✅ · 11.28+ ² | **5.x** (tested on 5.11) | 4.x (via Filament 5) | **Current** |
-| 0.2 – 0.6 | 8.2 – 8.4 ¹ | 12 · 13 | 5.x | 4.x | Superseded — upgrade to 0.7 |
+| **0.8.x** | 8.2 – 8.4 ¹ | **12** ✅ · **13** ✅ · 11.28+ ² | **5.x** (tested on 5.11) | 4.x (via Filament 5) | **Current** |
+| 0.2 – 0.7 | 8.2 – 8.4 ¹ | 12 · 13 | 5.x | 4.x | Superseded — upgrade to 0.8 |
 | — | — | — | 3.x · 4.x | — | Not supported (built on Filament 5's importer and schema APIs) |
 
-✅ = the full test suite (Pest, 54 tests + stress suite) passes on it · ¹ run on PHP 8.4; 8.2 and 8.3 are allowed by the constraints but were not run ·
+✅ = the full test suite (Pest, 58 tests + stress suite) passes on it · ¹ run on PHP 8.4; 8.2 and 8.3 are allowed by the constraints but were not run ·
 ² allowed by Filament 5, not run — every Laravel 11.x release is currently flagged by Composer security advisories, so upgrade to 12+.
 
 | Environment | Status |
@@ -52,7 +52,7 @@ Release notes: [CHANGELOG.md](CHANGELOG.md).
 
 ```bash
 composer config repositories.filament-import-wizard vcs git@github.com:solutionforest/filament-import-wizard.git
-composer require solution-forest/filament-import-wizard:^0.7
+composer require solution-forest/filament-import-wizard:^0.8
 php artisan migrate
 ```
 

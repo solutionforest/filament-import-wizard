@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.0
+- Review is ~19× faster: a compiled, conservative fast path (`FastRules`) decides "certainly passes" for common single-field rules natively; failures and anything unusual go to Laravel, so errors and messages are identical. 50k rows: 12.4 s → 0.65 s (77,000 rows/s); 200k rows: 49 s → 2.9 s.
+- `Concerns\ValidatesQuickly` for importers: the same fast path inside the real import (50k rows 18.8 s → 8.5 s).
+- Tests: exact-equivalence matrix (6,500 rows) and a 40,000-address e-mail fuzz against `email:rfc`.
+
 ## 0.7.0
 - Review is faster: the duplicate check is batched per slice (SQLite transaction / one query per 1,000 keys): 50k rows 12.4 s → 9.0 s. `RowCheck::checkMany()` and `SeenStore::markSeenMany()` added (custom checks must implement them), `RowValidator::validateMany()`.
 - Opt-in parallel Review on the queue: `->parallelReview()` (one `ReviewSlice` job per slice, results in `import_wizard_review_slices`).

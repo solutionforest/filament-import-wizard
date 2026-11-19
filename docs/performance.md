@@ -11,28 +11,30 @@ It generates a file with 1 % malformed e-mails and ~0.4 % duplicates, runs each 
 asserts the exact counts (rows, invalid rows, imported rows, failed-row records) and fails if memory grows. It is excluded
 from the normal `pest` run (`@group stress`).
 
-## Speeding up Review
+## Why Review was slow, and the fix (it is PHP, not Redis or the database)
 
-Where the time goes (profiled, per row, single core): Laravel's validator costs ≈ 150 µs for three fields (≈ 40 µs per field, ≈ 55 µs more
-for `email:rfc`); the importer's remap/cast is ≈ 2 µs; the duplicate check was ≈ 28 µs per row. So Review is bounded by Laravel's own validation —
-and there are three levers:
+Profiled per row on one core: Laravel's validator costs ≈ 150 µs for three fields (≈ 40 µs per field, `email:rfc` ≈ +55 µs). The importer's remap/cast
+is ≈ 2 µs and the duplicate check ≈ 4 µs (after batching). So the time was **PHP running Laravel's validator** — neither Redis nor a database can validate
+a row; they can only store results, and the only storage in Review (the duplicate seen-set) was already cheap. The fix is to do less work in PHP:
 
-1. **Batched duplicate check** *(on by default, since 0.6.1)* — the seen-store is now written once per slice, in one transaction (SQLite) or
-   one query per 1,000 keys (database store) instead of one write per row: 28 µs → 4 µs per row, and on a networked database the saving is far larger.
-   50,000 rows: **12.4 s → 9.0 s**.
-2. **Parallel Review** *(opt-in)* — `->parallelReview()` reviews the file as a batch of queue jobs, one per slice, collected by the page.
-   Slices are independent, so **time ≈ sequential time ÷ number of workers** (CPU-bound work). Requires a real queue and running workers; falls back to the
-   polled pass on the `sync` driver, and when the page declares file-level `getRowChecks()` (those must see rows in order). A failed slice
-   shows an error instead of a half result.
-3. **Lighter rules** — the rules are yours: `email:rfc` costs ~55 µs/row more than a plain `string|max` check. Use the strictness you need.
+1. **Compiled fast path *(on by default, since 0.8.0)*.** Common single-field rules — `required`, `nullable`, `string`, `integer`, `numeric`, `min`, `max`, `in`,
+   `email` / `email:rfc`, and any plain `ValidationRule` object (such as `PhoneNumber`) — are checked natively in a few microseconds. The fast path answers
+   only one question, *"does this field certainly pass?"*, and is built never to be more permissive than Laravel: an unusual value, an unknown rule or any failure
+   hands that row to Laravel's real validation, which also produces the messages. Results and messages are therefore **identical** with or without it
+   (a test compares 6,500 rows across a 45-value matrix, and fuzzes 40,000 e-mail addresses against `email:rfc`). Rules it can't reproduce (`regex`, `unique`/`exists`,
+   closures, cross-field rules, `email:dns`…) stay with Laravel; an importer that overrides `validateData()` is left alone.
+2. **Faster real import.** Filament validates each row again inside the importer. Add `use ValidatesQuickly;` to the importer (one line) to give that step the same
+   fast path — same errors, same messages.
+3. **Batched duplicate check** *(0.7.0)* — the seen-store is written once per slice (one SQLite transaction / one query per 1,000 keys).
+4. **Parallel Review** *(opt-in, 0.7.0)* — `->parallelReview()` runs one queue job per slice; time ≈ time ÷ workers. With the fast path you rarely need it (see below).
 
 ```php
-ImportWizardPlugin::make()->pages([ImportContacts::class])->parallelReview(queue: 'imports');
+class ContactImporter extends Importer
+{
+    use \SolutionForest\FilamentImportWizard\Concerns\ValidatesQuickly;   // real import
+}
+// Review gets the fast path automatically.
 ```
-
-Measured here (**one CPU core**): a real run through the `database` queue with two `queue:work` processes reviewed 50,000 rows in 25 slices with the
-exact same result (500 invalid) in ~9 s — as expected on a single core, where workers only compete. The speed-up appears with more cores / worker
-machines; I could not measure it in this one-core environment, so treat ÷ workers as the expected scaling, not a benchmark, and measure on yours.
 
 ## Results
 
@@ -41,18 +43,21 @@ setup. `peak growth` is how much PHP's peak memory rose during the stage.
 
 | Stage | 50,000 rows | 200,000 rows | Peak memory growth |
 | --- | --- | --- | --- |
-| Count / slice the CSV | 0.10 s | 0.42 s | 0 MB → 0 MB |
-| **Review** — every row through remap → cast → validate, plus `UniqueInFile` | **9.0 s** (was 12.4 s) | 49.1 s (before batching; not re-run) | **5 MB**, flat |
-| **Import** — 100 / 400 queued slices of 500 rows, errors recorded | 18.8 s | 77.0 s | **6.3 MB → 7.4 MB** |
-| XLSX → CSV conversion | 2.2 s | 9.0 s | 0.4 MB → 0 MB |
-| Chunked-upload join (2.5 MB / 10 MB file) | 0.02 s | 0.05 s | file held by the test itself |
+| Count / slice the CSV | 0.10 s | 0.41 s | 0 MB |
+| **Review** — every row through remap → cast → validate, plus `UniqueInFile` | **0.65 s** (was 12.4 s) | **2.9 s** (was 49 s) | 4.5 MB, flat |
+| **Import** — queued slices of 500 rows, errors recorded (importer uses `ValidatesQuickly`) | **8.5 s** (was 18.8 s) | **35 s** (was 77 s) | 6.6 MB → 8.1 MB |
+| XLSX → CSV conversion | 2.3 s | 9.1 s | ~0 MB |
+| Chunked-upload join (2.5 MB / 10 MB file) | 0.02 s | 0.06 s | file held by the test itself |
+
+Review went from ~4,000 to **~77,000 rows/s** (about 19×) and the import from ~2,600 to ~5,800 rows/s. What remains in the import is the real work: your
+`resolveRecord()`, the model fill and the database writes.
 
 What it shows:
 
 - **Memory is flat.** Quadrupling the file changes the peak by about a megabyte: nothing is loaded whole; rows stream through generators and slices.
-- **Time is linear** — about 5,500 rows/s for Review (4,000 before batching) and about 2,600 rows/s for the full import in this setup. Both are dominated by the importer's
-  own rules and database writes, not by the wizard.
-- **Review is interactive for any size.** It validates 2,000 rows per request (~0.35 s each here), so a 50,000-row file is about 25 short polls with a progress bar,
+- **Time is linear** — about 77,000 rows/s for Review and about 5,800 rows/s for the full import in this setup; the import is dominated by the importer's own
+  work and the database writes, not by the wizard.
+- **Review is interactive for any size.** It validates 2,000 rows per request (~25 ms each here), so a 50,000-row file is 25 short polls and finishes in well under a second,
   never one long request.
 - **Correctness holds under load** — exact invalid / duplicate / imported / failed counts at 50k and 200k rows.
 

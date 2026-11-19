@@ -6,11 +6,14 @@ use Filament\Actions\Imports\ImportColumn;
 use Filament\Actions\Imports\Importer;
 use Filament\Actions\Imports\Models\Import;
 use Illuminate\Database\Eloquent\Model;
+use SolutionForest\FilamentImportWizard\Concerns\ValidatesQuickly;
 use Workbench\App\Models\Contact;
 use Workbench\App\Rules\ContactRules;
 
 class ContactImporter extends Importer
 {
+    use ValidatesQuickly;
+
     protected static ?string $model = Contact::class;
 
     public static function getColumns(): array

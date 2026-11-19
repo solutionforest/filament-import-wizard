@@ -58,3 +58,7 @@ Override on your page class when one page needs something different:
 | `getEntityLabel()` | The word(s) in the page title — override to translate ([Localization](localization.md)) |
 
 Every plugin and config option is listed in [Configuration](configuration.md).
+
+## Faster imports
+
+Add `use ValidatesQuickly;` to your importer to skip Laravel's validator for rows that certainly pass — same errors and messages, about 2× faster imports. See [Performance](performance.md).
