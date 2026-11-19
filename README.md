@@ -1,4 +1,4 @@
-<p align="center"><img src="art/logo.svg" alt="Filament Import Wizard logo" width="120"></p>
+<p align="center"><img src="art/social-preview.png" alt="Filament Import Wizard: import and export CSV and Excel with a map, review, import wizard" width="100%"></p>
 <h1 align="center">Filament Import Wizard</h1>
 <p align="center"><strong>Import and export CSV and Excel in Filament: map the columns, check every row, then import.</strong></p>
 <p align="center">
