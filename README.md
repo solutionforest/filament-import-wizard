@@ -1,5 +1,24 @@
 # Filament Import Wizard
 
+<p align="center">
+  <img alt="Version" src="https://img.shields.io/badge/version-0.8.2-4f46e5?style=flat-square">
+  <img alt="PHP" src="https://img.shields.io/badge/PHP-8.2%20%E2%80%93%208.4-777bb4?style=flat-square&logo=php&logoColor=white">
+  <img alt="Laravel" src="https://img.shields.io/badge/Laravel-12%20%7C%2013-ff2d20?style=flat-square&logo=laravel&logoColor=white">
+  <img alt="Filament" src="https://img.shields.io/badge/Filament-5.x-fdae4b?style=flat-square">
+  <img alt="Livewire" src="https://img.shields.io/badge/Livewire-4.x-fb70a9?style=flat-square">
+  <img alt="PHPStan" src="https://img.shields.io/badge/PHPStan-level%2010-4f5b93?style=flat-square">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-75%20passing-2ea44f?style=flat-square">
+  <img alt="Fuzz and mutation tested" src="https://img.shields.io/badge/fast%20path-fuzz%20%2B%20mutation%20tested-2ea44f?style=flat-square">
+  <img alt="Stress tested" src="https://img.shields.io/badge/stress-200k%20rows-2ea44f?style=flat-square">
+  <img alt="Formats" src="https://img.shields.io/badge/files-CSV%20%C2%B7%20XLSX%20%C2%B7%20XLS%20%C2%B7%20ODS-0ea5e9?style=flat-square">
+  <img alt="Languages" src="https://img.shields.io/badge/i18n-en%20%C2%B7%20zh__CN%20%C2%B7%20zh__TW%20%C2%B7%20zh__HK-0ea5e9?style=flat-square">
+  <img alt="Horizon" src="https://img.shields.io/badge/Horizon-supported-0ea5e9?style=flat-square">
+  <img alt="Octane" src="https://img.shields.io/badge/Octane-reviewed-0ea5e9?style=flat-square">
+  <img alt="Multi-panel" src="https://img.shields.io/badge/panels-multi--panel-0ea5e9?style=flat-square">
+  <img alt="Distribution" src="https://img.shields.io/badge/distribution-self--hosted%20only-64748b?style=flat-square">
+  <img alt="License" src="https://img.shields.io/badge/license-proprietary-64748b?style=flat-square">
+</p>
+
 > Internal package — self-hosted distribution only (private repository, not on Packagist).
 
 A four-step **Upload → Map → Review → Import** page for [Filament](https://filamentphp.com) v5.
