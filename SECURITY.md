@@ -2,8 +2,8 @@
 
 ## Reporting a vulnerability
 
-Please **do not open a public issue** for a security problem. Report it privately to the Solution Forest maintainers (GitHub: *Security → Report a vulnerability* on this repository, or your usual
-internal security contact) with the affected version, what an attacker can do and, if possible, a minimal reproduction. We aim to acknowledge reports within 3 working days.
+Please **do not open a public issue** for a security problem. Report it privately to the Solution Forest maintainers (GitHub: *Security → Report a vulnerability* on this repository.
+Include the affected version, what an attacker can do and, if possible, a minimal reproduction. We aim to acknowledge reports within 3 working days.
 
 ## Supported versions
 

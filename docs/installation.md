@@ -1,15 +1,13 @@
 # Installation
 
-## 1. Require the package (private repository)
+## 1. Require the package
 
-The package is distributed from our own repository only. Add it as a Composer VCS repository, then require it:
+The package is open source (MIT). Until it is listed on Packagist, add the GitHub repository as a Composer VCS repository, then require it:
 
 ```bash
-composer config repositories.filament-import-wizard vcs git@github.com:solutionforest/filament-import-wizard.git
+composer config repositories.filament-import-wizard vcs https://github.com/solutionforest/filament-import-wizard.git
 composer require solution-forest/filament-import-wizard:^0.8
 ```
-
-CI and deploy servers need a deploy key (or token) with read access to the repository.
 
 Requirements: PHP 8.2+, Filament 5 (and the Laravel version it requires), `ext-pdo_sqlite`.
 

@@ -3,8 +3,7 @@
 Everything to list the plugin on [filamentphp.com/plugins](https://filamentphp.com/plugins) (submit at <https://filamentphp.com/author>, GitHub login). Regenerate the images with
 `node art/tools/render-directory.js` after UI changes.
 
-> **Decide before submitting:** the directory links to a GitHub repository people can install from. This package is currently **private / proprietary / self-hosted only**.
-> To list it you need a public repository (or the paid-plugin route) and a licence that allows it. Nothing here publishes anything.
+> The repository is public and MIT licensed, so it can be listed. Add it to Packagist first if you want a plain `composer require`.
 
 ## Images (PNG for upload, WebP for the web — same content)
 
@@ -30,7 +29,7 @@ Screenshot order and captions: 1 *Drop a CSV or Excel file* · 2 *Map columns wi
 - **Dark mode:** dark-mode styles are included (not visually verified in every screen).
 - **Suggested tags / categories:** Import & Export · Developer tool · Actions · Pages · Notifications · Localization.
 - **Links:** repository `https://github.com/solutionforest/filament-import-wizard` · docs `…/tree/main/docs` · video `docs/video/tutorial.mp4` · changelog `CHANGELOG.md`.
-- **Pricing:** free or paid — your call (the code is proprietary today).
+- **Pricing:** free (MIT).
 
 ### Long description (Markdown)
 

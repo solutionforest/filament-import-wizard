@@ -13,15 +13,10 @@ concurrency:
 permissions:
   contents: read
 
-# Set the repository variable CI_RUNNER (Settings → Variables) to e.g. `self-hosted`
-# to run every job on your own runners; it defaults to GitHub-hosted Ubuntu.
-env:
-  RUNNER: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
-
 jobs:
   lint:
     name: Code style (Pint)
-    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
@@ -35,7 +30,7 @@ jobs:
 
   phpstan:
     name: PHPStan level 10
-    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
@@ -49,7 +44,7 @@ jobs:
 
   tests:
     name: Pest — PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }}
-    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -82,7 +77,7 @@ jobs:
 
   security:
     name: Security tests + dependency audit
-    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
@@ -99,7 +94,7 @@ jobs:
 
   interop:
     name: Interop with other spreadsheet libraries
-    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2

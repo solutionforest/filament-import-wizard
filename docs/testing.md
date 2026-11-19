@@ -29,8 +29,7 @@ only ever says "certainly passes", and anything doubtful goes to Laravel — and
 `.github/workflows/deep-checks.yml` runs weekly (and on demand): the 300,000-case differential fuzz, the mutation test (at most the 2 documented equivalent survivors)
 and the 50,000-row stress test. Dependabot opens weekly PRs for Composer and Actions updates.
 
-To run every job on your own runners set the repository variable `CI_RUNNER` (e.g. `self-hosted`); it defaults to GitHub-hosted Ubuntu. `composer check` runs the
-lint, analysis, tests and security checks locally in one go.
+`composer check` runs the lint, analysis, tests and security checks locally in one go.
 
 ## Running
 

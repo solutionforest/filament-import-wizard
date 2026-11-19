@@ -8,10 +8,8 @@
   <img src="https://img.shields.io/badge/PHPStan-level%2010-brightgreen?logo=php&logoColor=white" alt="PHPStan level 10">
   <a href="https://github.com/solutionforest/filament-import-wizard/actions/workflows/ci.yml"><img src="https://github.com/solutionforest/filament-import-wizard/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <img src="https://img.shields.io/badge/release-0.10.1-4f46e5" alt="Release 0.10.1">
-  <img src="https://img.shields.io/badge/license-proprietary-lightgrey" alt="License: proprietary">
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="License: MIT">
 </p>
-
-> Internal package: self-hosted distribution only (private repository, not on Packagist).
 
 Your users have a spreadsheet; your Filament app needs the rows. This package gives you a four-step **Upload → Map → Review → Import** wizard for [Filament](https://filamentphp.com) v5 that accepts **CSV and Excel** files, shows **every row checked before anything is written**, and imports files of any size. It also **exports** a list back to Excel / CSV in the layout the importer reads, so files round-trip, and the same engine is available as a plain **API class** when you need no screen. It sits on top of Filament's own `Importer` classes, so **your existing importers work unchanged**.
 
@@ -78,7 +76,7 @@ Release notes: [CHANGELOG.md](CHANGELOG.md).
 ## Install
 
 ```bash
-composer config repositories.filament-import-wizard vcs git@github.com:solutionforest/filament-import-wizard.git
+composer config repositories.filament-import-wizard vcs https://github.com/solutionforest/filament-import-wizard.git
 composer require solution-forest/filament-import-wizard:^0.10
 php artisan migrate
 ```
@@ -134,7 +132,7 @@ $review->isValid() && $import->user($user)->start();            // queued, like 
 
 | | |
 | --- | --- |
-| [Installation](docs/installation.md) | Private repo, migrations, queue |
+| [Installation](docs/installation.md) | Composer, migrations, queue |
 | [Usage](docs/usage.md) | The page, the plugin, several panels |
 | [How it works](docs/how-it-works.md) | The four steps, mapping, preview |
 | [Export](docs/export.md) | Excel / CSV export and templates that round-trip with the importer |
@@ -155,7 +153,7 @@ $review->isValid() && $import->user($user)->start();            // queued, like 
 ## Try the demo
 
 ```bash
-git clone git@github.com:solutionforest/filament-import-wizard.git && cd filament-import-wizard
+git clone https://github.com/solutionforest/filament-import-wizard.git && cd filament-import-wizard
 composer install && composer serve      # http://127.0.0.1:8765/admin
 ```
 
@@ -171,4 +169,4 @@ composer fuzz      # 300,000-case differential fuzz of the fast validation path 
 composer mutate    # mutation test of the fast path
 ```
 
-Proprietary — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).

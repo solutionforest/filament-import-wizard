@@ -2,7 +2,7 @@
     "name": "solution-forest/filament-import-wizard",
     "description": "Import and export CSV and Excel in Filament v5: a four-step upload, map, review, import wizard with live preview, row-by-row validation before import, huge-file support, round-trip export, audit/approval and a headless API.",
     "type": "library",
-    "license": "proprietary",
+    "license": "MIT",
     "keywords": [
         "filament",
         "filament-plugin",
