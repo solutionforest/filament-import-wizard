@@ -159,9 +159,17 @@ abstract class ImportWizardPage extends Page
 
     public function getTitle(): string
     {
-        return __('filament-import-wizard::import.title', [
-            'label' => Str::of(class_basename(static::getImporter()))->beforeLast('Importer')->headline()->lower()->plural()->toString(),
-        ]);
+        return __('filament-import-wizard::import.title', ['label' => $this->getEntityLabel()]);
+    }
+
+    /**
+     * What is being imported, as it appears in the page title ("Import contacts
+     * from a file"). Derived from the importer's class name; override it to
+     * return a translated label, e.g. `__('contacts.plural')`.
+     */
+    protected function getEntityLabel(): string
+    {
+        return Str::of(class_basename(static::getImporter()))->beforeLast('Importer')->headline()->lower()->plural()->toString();
     }
 
     /**

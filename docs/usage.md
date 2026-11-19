@@ -55,5 +55,6 @@ Override on your page class when one page needs something different:
 | `getRowsPerReviewRequest()` | Rows validated per poll in Review |
 | `getRowChecks()` | File-level checks, e.g. duplicates — see [Rules](rules.md) |
 | `getAcceptedFileTypes()` | Allowed MIME types |
+| `getEntityLabel()` | The word(s) in the page title — override to translate ([Localization](localization.md)) |
 
 Every plugin and config option is listed in [Configuration](configuration.md).

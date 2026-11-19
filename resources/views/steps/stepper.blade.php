@@ -23,7 +23,7 @@
     .iw-errors { list-style: none; margin: 0; padding: 0; font-size: .875rem; }
     .iw-errors li { padding: .5rem 0; border-top: 1px solid var(--gray-100); }
     .iw-errors li:first-child { border-top: 0; }
-    .iw-errors strong { margin-right: .5rem; }
+    .iw-errors strong { margin-inline-end: .5rem; }
     .iw-actions { display: flex; justify-content: flex-end; gap: .75rem; }
     .iw-drop { display: block; border: 2px dashed var(--gray-300); border-radius: .75rem; padding: 2rem 1rem; text-align: center; cursor: pointer; transition: border-color .15s, background .15s; }
     .iw-drop:hover, .iw-drop[data-over="true"] { border-color: var(--primary-600); background: color-mix(in srgb, var(--primary-600) 6%, transparent); }
@@ -31,14 +31,14 @@
     .iw-drop small { display: block; margin-top: .25rem; color: var(--gray-500); }
     .iw-table-wrap { overflow-x: auto; }
     .iw-table { width: 100%; border-collapse: collapse; font-size: .875rem; }
-    .iw-table th { text-align: left; font-size: .75rem; letter-spacing: .03em; text-transform: uppercase; color: var(--gray-500); font-weight: 600; padding: .5rem .75rem; border-bottom: 1px solid var(--gray-200); white-space: nowrap; }
+    .iw-table th { text-align: start; font-size: .75rem; letter-spacing: .03em; text-transform: uppercase; color: var(--gray-500); font-weight: 600; padding: .5rem .75rem; border-bottom: 1px solid var(--gray-200); white-space: nowrap; }
     .iw-table td { padding: .5rem .75rem; border-bottom: 1px solid var(--gray-100); white-space: nowrap; max-width: 16rem; overflow: hidden; text-overflow: ellipsis; }
     .dark .iw-table th, .dark .iw-table td { border-color: rgba(255,255,255,.1); }
     .iw-table .iw-status { width: 2rem; text-align: center; font-weight: 700; }
     .iw-table tr[data-bad="true"] .iw-status { color: var(--danger-600); }
     .iw-table tr[data-bad="false"] .iw-status { color: var(--success-600); }
     .iw-table td[data-error="true"] { background: color-mix(in srgb, var(--danger-600) 10%, transparent); color: var(--danger-600); }
-    .iw-table caption { text-align: left; padding: 0 .75rem .5rem; font-size: .875rem; font-weight: 500; }
+    .iw-table caption { text-align: start; padding: 0 .75rem .5rem; font-size: .875rem; font-weight: 500; }
     .iw-stack > * + * { margin-top: 1rem; }
 </style>
 

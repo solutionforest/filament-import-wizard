@@ -38,4 +38,5 @@ python3 -c "print('Full Name,Work Email'); [print(f'Person {i},p{i}@example.com'
 
 - The demo allows self-approval because it has a single user — never do that in production.
 - It uses the `sync` queue, so an import finishes inside the request. Use a real queue in an app.
+- To see another language, set `APP_LOCALE` (e.g. `zh_HK`) or call `app()->setLocale()` in `AdminPanelProvider`.
 - Reset the demo data: `vendor/bin/testbench workbench:build`.

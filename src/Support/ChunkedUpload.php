@@ -48,15 +48,15 @@ class ChunkedUpload
         $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
         if (! in_array($extension, self::EXTENSIONS, true)) {
-            throw new InvalidArgumentException('Unsupported file type.');
+            throw new InvalidArgumentException(__('filament-import-wizard::errors.unsupported_type'));
         }
 
         if ($size < 1) {
-            throw new InvalidArgumentException('The file is empty.');
+            throw new InvalidArgumentException(__('filament-import-wizard::errors.empty_file'));
         }
 
         if ($maxKilobytes !== null && $size > $maxKilobytes * 1024) {
-            throw new InvalidArgumentException('The file is larger than the allowed size.');
+            throw new InvalidArgumentException(__('filament-import-wizard::errors.too_large'));
         }
 
         $id = bin2hex(random_bytes(16));
@@ -80,14 +80,14 @@ class ChunkedUpload
         $manifest = $this->manifest($id, $owner);
 
         if ($index < 0 || $index >= $manifest['chunks']) {
-            throw new InvalidArgumentException('Chunk index out of range.');
+            throw new InvalidArgumentException(__('filament-import-wizard::errors.chunk_out_of_range'));
         }
 
         $isLast = $index === $manifest['chunks'] - 1;
         $expected = $isLast ? $manifest['size'] - $manifest['chunk_size'] * ($manifest['chunks'] - 1) : $manifest['chunk_size'];
 
         if ($chunk->getSize() !== $expected) {
-            throw new InvalidArgumentException("Chunk {$index} has the wrong size.");
+            throw new InvalidArgumentException(__('filament-import-wizard::errors.chunk_wrong_size', ['index' => $index]));
         }
 
         $stream = fopen($chunk->getRealPath(), 'r');
@@ -114,7 +114,7 @@ class ChunkedUpload
 
         for ($index = 0; $index < $manifest['chunks']; $index++) {
             if (! $storage->exists($this->chunkPath($id, $index))) {
-                throw new RuntimeException("Chunk {$index} is missing.");
+                throw new RuntimeException(__('filament-import-wizard::errors.chunk_missing', ['index' => $index]));
             }
         }
 
@@ -145,7 +145,7 @@ class ChunkedUpload
             fclose($out);
 
             if (filesize($local) !== $manifest['size']) {
-                throw new RuntimeException('The assembled file does not match the announced size.');
+                throw new RuntimeException(__('filament-import-wizard::errors.size_mismatch'));
             }
 
             $final = trim($this->directory, '/').'/'.$id.'-'.$manifest['name'];
@@ -203,7 +203,7 @@ class ChunkedUpload
     protected function manifest(string $id, string $owner): array
     {
         if (preg_match('/^[a-f0-9]{32}$/', $id) !== 1 || ! $this->storage()->exists($this->manifestPath($id))) {
-            throw new InvalidArgumentException('Unknown upload.');
+            throw new InvalidArgumentException(__('filament-import-wizard::errors.unknown_upload'));
         }
 
         $manifest = json_decode((string) $this->storage()->get($this->manifestPath($id)), true);
@@ -216,12 +216,12 @@ class ChunkedUpload
             || ! is_int($manifest['chunk_size'] ?? null)
             || ! is_int($manifest['chunks'] ?? null)
         ) {
-            throw new InvalidArgumentException('Unknown upload.');
+            throw new InvalidArgumentException(__('filament-import-wizard::errors.unknown_upload'));
         }
 
         // Uploads belong to the user who started them.
         if (! hash_equals($manifest['owner'], $owner)) {
-            throw new InvalidArgumentException('Unknown upload.');
+            throw new InvalidArgumentException(__('filament-import-wizard::errors.unknown_upload'));
         }
 
         return [

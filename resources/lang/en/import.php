@@ -20,17 +20,17 @@ return [
     'review' => [
         'checking' => 'Checking… :checked of :total rows',
         'ready' => 'All :total rows checked',
-        'valid' => ':count rows are ready to import',
-        'invalid' => ':count rows have problems (rows that fail validation are skipped on import)',
+        'valid' => '{1} :count row is ready to import|[0,*] :count rows are ready to import',
+        'invalid' => '{1} :count row has a problem (rows that fail validation are skipped on import)|[0,*] :count rows have problems (rows that fail validation are skipped on import)',
         'row' => 'Row :row',
-        'import' => 'Import :count rows',
+        'import' => '{1} Import :count row|[0,*] Import :count rows',
         'submit_for_approval' => 'Submit for approval',
         'back' => 'Back to mapping',
     ],
     'import' => [
         'importing' => 'Importing… :processed of :total rows',
         'done' => 'Import finished: :successful of :total rows imported',
-        'failed' => ':count rows failed. Download them from the notification.',
+        'failed' => '{1} :count row failed. Download it from the notification.|[0,*] :count rows failed. Download them from the notification.',
     ],
     'approval' => [
         'submitted' => 'Submitted for approval',
@@ -38,7 +38,7 @@ return [
     ],
     'preview' => [
         'map' => 'Preview — how the first rows will be imported',
-        'review' => 'First :count rows, checked',
+        'review' => '{1} First row, checked|[0,*] First :count rows, checked',
         'empty' => 'No rows to preview.',
     ],
     'start_over' => 'Start over',

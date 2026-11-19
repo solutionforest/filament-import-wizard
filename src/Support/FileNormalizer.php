@@ -101,7 +101,7 @@ class FileNormalizer
         } catch (RuntimeException $exception) {
             throw $exception;
         } catch (\Throwable $exception) {
-            throw new RuntimeException('Unable to read the spreadsheet: '.$exception->getMessage(), previous: $exception);
+            throw new RuntimeException(__('filament-import-wizard::errors.spreadsheet_unreadable', ['reason' => $exception->getMessage()]), previous: $exception);
         } finally {
             fclose($out);
             @unlink($local);
@@ -152,7 +152,7 @@ class FileNormalizer
     protected function xlsReader(): Xls
     {
         if (! class_exists(Xls::class)) {
-            throw new RuntimeException('Importing .xls files needs phpoffice/phpspreadsheet (composer require phpoffice/phpspreadsheet), or save the file as .xlsx.');
+            throw new RuntimeException(__('filament-import-wizard::errors.xls_needs_phpspreadsheet'));
         }
 
         $reader = new Xls;

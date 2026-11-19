@@ -26,7 +26,7 @@
 | `job_timeout` | `IMPORT_WIZARD_JOB_TIMEOUT` | `600` | Seconds a queued slice may run |
 | `preview_rows` | `IMPORT_WIZARD_PREVIEW_ROWS` | `10` | Rows in the Map / Review preview tables |
 
-Publish it with `php artisan vendor:publish --tag=import-wizard-config`.
+Publish it with `php artisan vendor:publish --tag=import-wizard-config`. Translations: `--tag=import-wizard-translations` ([Localization](localization.md)).
 
 ## Console commands
 

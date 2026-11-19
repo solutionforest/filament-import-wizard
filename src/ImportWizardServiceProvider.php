@@ -40,6 +40,7 @@ class ImportWizardServiceProvider extends ServiceProvider
 
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         $this->publishes([__DIR__.'/../config/import-wizard.php' => config_path('import-wizard.php')], 'import-wizard-config');
+        $this->publishes([__DIR__.'/../resources/lang' => lang_path('vendor/filament-import-wizard')], 'import-wizard-translations');
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'filament-import-wizard');
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'filament-import-wizard');
     }

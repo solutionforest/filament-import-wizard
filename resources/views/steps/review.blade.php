@@ -9,15 +9,15 @@
         <div class="iw-row">
             <span>
                 {{ $livewire->reviewFinished
-                    ? __('filament-import-wizard::import.review.ready', ['total' => number_format($livewire->totalRows)])
-                    : __('filament-import-wizard::import.review.checking', ['checked' => number_format($livewire->reviewedRows), 'total' => number_format($livewire->totalRows)]) }}
+                    ? __('filament-import-wizard::import.review.ready', ['total' => \Illuminate\Support\Number::format($livewire->totalRows)])
+                    : __('filament-import-wizard::import.review.checking', ['checked' => \Illuminate\Support\Number::format($livewire->reviewedRows), 'total' => \Illuminate\Support\Number::format($livewire->totalRows)]) }}
             </span>
             <span>{{ round($percent) }}%</span>
         </div>
         <div class="iw-progress"><div style="width: {{ $percent }}%"></div></div>
-        <p class="iw-ok">{{ __('filament-import-wizard::import.review.valid', ['count' => number_format($valid)]) }}</p>
+        <p class="iw-ok">{{ trans_choice('filament-import-wizard::import.review.valid', $valid, ['count' => \Illuminate\Support\Number::format($valid)]) }}</p>
         @if ($livewire->invalidRows)
-            <p class="iw-bad">{{ __('filament-import-wizard::import.review.invalid', ['count' => number_format($livewire->invalidRows)]) }}</p>
+            <p class="iw-bad">{{ trans_choice('filament-import-wizard::import.review.invalid', $livewire->invalidRows, ['count' => \Illuminate\Support\Number::format($livewire->invalidRows)]) }}</p>
         @endif
     </x-filament::section>
 
@@ -26,7 +26,7 @@
             @include('filament-import-wizard::steps.preview-table', [
                 'columns' => $livewire->getMappedColumns(),
                 'rows' => $livewire->previewRows,
-                'caption' => __('filament-import-wizard::import.preview.review', ['count' => count($livewire->previewRows)]),
+                'caption' => trans_choice('filament-import-wizard::import.preview.review', count($livewire->previewRows), ['count' => count($livewire->previewRows)]),
                 'withStatus' => true,
             ])
         </x-filament::section>
@@ -50,7 +50,7 @@
     <div class="iw-actions">
         <x-filament::button color="gray" wire:click="startOver">{{ __('filament-import-wizard::import.start_over') }}</x-filament::button>
         <x-filament::button :disabled="! $livewire->reviewFinished" wire:click="startImport">
-            {{ $livewire->needsApproval() ? __('filament-import-wizard::import.review.submit_for_approval') : __('filament-import-wizard::import.review.import', ['count' => number_format($valid)]) }}
+            {{ $livewire->needsApproval() ? __('filament-import-wizard::import.review.submit_for_approval') : trans_choice('filament-import-wizard::import.review.import', $valid, ['count' => \Illuminate\Support\Number::format($valid)]) }}
         </x-filament::button>
     </div>
 </div>

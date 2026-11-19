@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.0
+- Full localization: audit page, status labels, error messages and JS messages moved to translation files; plural-aware counts, locale-aware numbers and dates, RTL-safe CSS.
+- New locales: `zh_CN`, `zh_TW`, `zh_HK`; `import-wizard-translations` publish tag; `getEntityLabel()` hook; tests guard key parity and hard-coded text.
+
 ## 0.5.1
 - Docs: supported-versions table, video tutorial, changelog.
 - Dev dependencies now allow Testbench / Workbench 9–11 so the suite can run on Laravel 11, 12 and 13 (verified on 12 and 13).

@@ -26,7 +26,7 @@ class ChunkedUploadController
         $size = $request->input('size');
 
         if (! is_string($name) || ! is_numeric($size)) {
-            return response()->json(['message' => 'Invalid request.'], 422);
+            return response()->json(['message' => __('filament-import-wizard::errors.invalid_request')], 422);
         }
 
         return $this->guard(fn (): array => $this->uploads()->begin(
@@ -44,7 +44,7 @@ class ChunkedUploadController
         $chunk = $request->file('chunk');
 
         if (! is_string($id) || ! is_numeric($index) || ! $chunk instanceof UploadedFile) {
-            return response()->json(['message' => 'Invalid request.'], 422);
+            return response()->json(['message' => __('filament-import-wizard::errors.invalid_request')], 422);
         }
 
         return $this->guard(function () use ($id, $index, $chunk): array {
@@ -59,7 +59,7 @@ class ChunkedUploadController
         $id = $request->input('id');
 
         if (! is_string($id)) {
-            return response()->json(['message' => 'Invalid request.'], 422);
+            return response()->json(['message' => __('filament-import-wizard::errors.invalid_request')], 422);
         }
 
         return $this->guard(fn (): array => ['path' => $this->uploads()->complete($id, $this->owner())]);
@@ -72,7 +72,7 @@ class ChunkedUploadController
     {
         // Belt and braces: a panel without auth middleware must not accept anonymous uploads.
         if (! Filament::auth()->check()) {
-            return response()->json(['message' => 'Unauthenticated.'], 401);
+            return response()->json(['message' => __('filament-import-wizard::errors.unauthenticated')], 401);
         }
 
         try {

@@ -23,17 +23,18 @@ every row, submit for approval, approve, and read the audit trail. Chapters and 
 - **Huge files** — streamed, never loaded into memory; resumable chunked upload bypasses PHP's size limit.
 - **One rules class** for Filament forms *and* imports.
 - **Optional audit trail and approval step** (maker–checker).
+- **Translated** — English, 简体中文, 繁體中文 (TW / HK); add your own locale in minutes.
 - Multi-panel, multi-server, Horizon and Octane friendly. PHPStan level 10.
 
 ## Supported versions
 
 | Package | PHP | Laravel | Filament | Livewire | Status |
 | --- | --- | --- | --- | --- | --- |
-| **0.5.x** | 8.2 – 8.4 ¹ | **12** ✅ · **13** ✅ · 11.28+ ² | **5.x** (tested on 5.11) | 4.x (via Filament 5) | **Current** |
-| 0.2 – 0.4 | 8.2 – 8.4 ¹ | 12 · 13 | 5.x | 4.x | Superseded — upgrade to 0.5 |
+| **0.6.x** | 8.2 – 8.4 ¹ | **12** ✅ · **13** ✅ · 11.28+ ² | **5.x** (tested on 5.11) | 4.x (via Filament 5) | **Current** |
+| 0.2 – 0.5 | 8.2 – 8.4 ¹ | 12 · 13 | 5.x | 4.x | Superseded — upgrade to 0.6 |
 | — | — | — | 3.x · 4.x | — | Not supported (built on Filament 5's importer and schema APIs) |
 
-✅ = the full test suite (Pest, 39 tests) passes on it · ¹ run on PHP 8.4; 8.2 and 8.3 are allowed by the constraints but were not run ·
+✅ = the full test suite (Pest, 49 tests) passes on it · ¹ run on PHP 8.4; 8.2 and 8.3 are allowed by the constraints but were not run ·
 ² allowed by Filament 5, not run — every Laravel 11.x release is currently flagged by Composer security advisories, so upgrade to 12+.
 
 | Environment | Status |
@@ -50,7 +51,7 @@ Release notes: [CHANGELOG.md](CHANGELOG.md).
 
 ```bash
 composer config repositories.filament-import-wizard vcs git@github.com:solutionforest/filament-import-wizard.git
-composer require solution-forest/filament-import-wizard:^0.5
+composer require solution-forest/filament-import-wizard:^0.6
 php artisan migrate
 ```
 
@@ -92,6 +93,7 @@ $panel->plugin(ImportWizardPlugin::make()->pages([ImportContacts::class]));
 | [Audit & approval](docs/audit-and-approval.md) | Optional trail and maker–checker |
 | [Scaling](docs/scaling.md) | Several servers, Horizon, Octane |
 | [Configuration](docs/configuration.md) | Every option in one place |
+| [Localization](docs/localization.md) | Languages, overriding texts, adding a locale |
 | [Video tutorial](docs/video-tutorial.md) | Chapters and how it was recorded |
 
 ## Try the demo

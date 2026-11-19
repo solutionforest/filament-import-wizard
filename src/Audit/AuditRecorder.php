@@ -117,7 +117,7 @@ class AuditRecorder
         $from = $audit->status;
 
         if ($from->isFinal()) {
-            throw new RuntimeException("Audit #{$audit->id} is already {$from->value}.");
+            throw new RuntimeException(__('filament-import-wizard::audit.errors.already_final', ['id' => $audit->id, 'status' => $from->getLabel()]));
         }
 
         $audit->status = $to;

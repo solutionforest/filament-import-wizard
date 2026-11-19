@@ -33,13 +33,19 @@ class ImportAuditsPage extends Page implements HasTable
 
     protected static ?string $slug = 'import-audit';
 
-    protected static ?string $title = 'Import audit';
-
-    protected static ?string $navigationLabel = 'Import audit';
-
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-check';
 
     protected string $view = 'filament-import-wizard::pages.import-audits';
+
+    public function getTitle(): string
+    {
+        return __('filament-import-wizard::audit.title');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('filament-import-wizard::audit.navigation');
+    }
 
     public function table(Table $table): Table
     {
@@ -49,39 +55,39 @@ class ImportAuditsPage extends Page implements HasTable
             ->poll('10s')
             ->columns([
                 TextColumn::make('id')->label('#')->sortable(),
-                TextColumn::make('created_at')->label('When')->dateTime()->sortable(),
-                TextColumn::make('user.name')->label('Uploaded by')->placeholder('—'),
-                TextColumn::make('file_name')->label('File')->searchable()->limit(30)->description(fn (ImportAudit $record): string => class_basename($record->importer)),
-                TextColumn::make('total_rows')->label('Rows')->numeric(),
-                TextColumn::make('invalid_rows')->label('Problems')->numeric(),
-                TextColumn::make('status')->badge(),
+                TextColumn::make('created_at')->label(__('filament-import-wizard::audit.columns.when'))->dateTime()->sortable(),
+                TextColumn::make('user.name')->label(__('filament-import-wizard::audit.columns.uploaded_by'))->placeholder('—'),
+                TextColumn::make('file_name')->label(__('filament-import-wizard::audit.columns.file'))->searchable()->limit(30)->description(fn (ImportAudit $record): string => class_basename($record->importer)),
+                TextColumn::make('total_rows')->label(__('filament-import-wizard::audit.columns.rows'))->numeric(),
+                TextColumn::make('invalid_rows')->label(__('filament-import-wizard::audit.columns.problems'))->numeric(),
+                TextColumn::make('status')->label(__('filament-import-wizard::audit.columns.status'))->badge(),
             ])
             ->filters([
                 SelectFilter::make('status')->options(collect(AuditStatus::cases())->mapWithKeys(fn (AuditStatus $status): array => [$status->value => $status->getLabel()])->all()),
             ])
             ->recordActions([
                 Action::make('history')
-                    ->label('History')
+                    ->label(__('filament-import-wizard::audit.actions.history'))
                     ->icon('heroicon-o-clock')
-                    ->modalHeading(fn (ImportAudit $record): string => "Import #{$record->id}")
+                    ->modalHeading(fn (ImportAudit $record): string => __('filament-import-wizard::audit.history.heading', ['id' => $record->id]))
                     ->modalContent(fn (ImportAudit $record): View => view('filament-import-wizard::audit.history', ['audit' => $record->load('events')]))
                     ->modalSubmitAction(false)
-                    ->modalCancelActionLabel('Close'),
+                    ->modalCancelActionLabel(__('filament-import-wizard::audit.actions.close')),
                 Action::make('approve')
-                    ->label('Approve')
+                    ->label(__('filament-import-wizard::audit.actions.approve'))
                     ->icon('heroicon-o-check')
                     ->color('success')
                     ->visible(fn (ImportAudit $record): bool => $this->canDecide($record))
                     ->requiresConfirmation()
-                    ->modalDescription('The file will be imported now, as its uploader.')
-                    ->schema([Textarea::make('note')->label('Note (optional)')])
+                    ->modalDescription(__('filament-import-wizard::audit.actions.approve_description'))
+                    ->schema([Textarea::make('note')->label(__('filament-import-wizard::audit.actions.note'))])
                     ->action(fn (ImportAudit $record, array $data) => $this->decide($record, true, $this->note($data))),
                 Action::make('reject')
-                    ->label('Reject')
+                    ->label(__('filament-import-wizard::audit.actions.reject'))
                     ->icon('heroicon-o-x-mark')
                     ->color('danger')
                     ->visible(fn (ImportAudit $record): bool => $this->canDecide($record))
-                    ->schema([Textarea::make('note')->label('Reason')->required()])
+                    ->schema([Textarea::make('note')->label(__('filament-import-wizard::audit.actions.reason'))->required()])
                     ->action(fn (ImportAudit $record, array $data) => $this->decide($record, false, $this->note($data))),
             ]);
     }
@@ -143,6 +149,6 @@ class ImportAuditsPage extends Page implements HasTable
             return;
         }
 
-        Notification::make()->title($approve ? 'Import approved and started' : 'Import rejected')->success()->send();
+        Notification::make()->title(__($approve ? 'filament-import-wizard::audit.notifications.approved' : 'filament-import-wizard::audit.notifications.rejected'))->success()->send();
     }
 }

@@ -21,7 +21,7 @@
                 credentials: 'same-origin',
             })
             const data = await response.json().catch(() => ({}))
-            if (! response.ok) throw new Error(data.message || ('Upload failed (' + response.status + ')'))
+            if (! response.ok) throw new Error(data.message || @js(__('filament-import-wizard::errors.upload_failed', ['status' => '__STATUS__'])).replace('__STATUS__', response.status))
             return data
         },
         async upload(file) {

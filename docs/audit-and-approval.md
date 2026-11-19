@@ -1,6 +1,6 @@
 # Audit & approval
 
-Both are **optional and off by default**.
+Both are **optional and off by default**. Without them there is no audit page and the last wizard button is simply **Import** — "Submit for approval" appears only when you call `requireApproval()` and the rule applies to that import.
 
 ## Audit trail
 

@@ -20,16 +20,9 @@ enum AuditStatus: string implements HasColor, HasLabel
 
     public function getLabel(): string
     {
-        return match ($this) {
-            self::Uploaded => 'Uploaded',
-            self::Reviewed => 'Reviewed',
-            self::PendingApproval => 'Pending approval',
-            self::Approved => 'Approved',
-            self::Rejected => 'Rejected',
-            self::Importing => 'Importing',
-            self::Completed => 'Completed',
-            self::CompletedWithFailures => 'Completed with failures',
-        };
+        $label = __('filament-import-wizard::audit.status.'.$this->value);
+
+        return is_string($label) ? $label : $this->value;
     }
 
     public function getColor(): string

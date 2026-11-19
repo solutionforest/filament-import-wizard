@@ -29,7 +29,7 @@ class ImportApprovals
         $columnMap = $audit->column_map;
 
         if ($columnMap === null) {
-            throw new RuntimeException("Audit #{$audit->id} has no reviewed column map.");
+            throw new RuntimeException(__('filament-import-wizard::audit.errors.no_column_map', ['id' => $audit->id]));
         }
 
         $importer = $audit->importer;
@@ -83,7 +83,7 @@ class ImportApprovals
     protected function authorize(ImportAudit $audit, Authenticatable $user): void
     {
         if (! $this->canDecide($audit, $user)) {
-            throw new AuthorizationException('You cannot approve or reject this import.');
+            throw new AuthorizationException(__('filament-import-wizard::audit.notifications.cannot_decide'));
         }
     }
 
