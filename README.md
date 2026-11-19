@@ -22,11 +22,33 @@
 
 > Internal package — self-hosted distribution only (private repository, not on Packagist).
 
-A four-step **Upload → Map → Review → Import** page for [Filament](https://filamentphp.com) v5.
-Drop in a CSV or Excel file, check every row *before* anything is written, then import it — files of any size.
-It sits on top of Filament's own `Importer` classes, so **your existing importers work unchanged**.
+**Import and export for Filament v5 — done properly.** Upload a CSV or Excel file, map the columns, see **every row checked before anything is written**, then import it —
+in a full page or a **slide-over** from any list. Export the same data back to Excel / CSV in the layout the importer reads, so files **round-trip**. Need no screen at all?
+The same engine is a plain **API class**. It sits on top of Filament's own `Importer` classes, so **your existing importers work unchanged**.
 
-![Review step](docs/images/3-review.png)
+![The wizard: Review step with the row preview](docs/images/3-review.png)
+
+## What you get
+
+| | Feature | |
+| --- | --- | --- |
+| 📥 | **Four-step import wizard** | Upload → Map → Review → Import, as a page or in a [slide-over](docs/slide-over.md) opened from a button on any list page, with optional start / done **Filament notifications** |
+| 📄 | **CSV, XLSX, XLS, ODS** | Multi-sheet workbooks, odd encodings (UTF-16, Windows-1252) and delimiters handled — [file formats](docs/file-formats.md) |
+| 🧭 | **Smart column mapping** | Matched by name, label, aliases and fuzzy similarity; sample values under each field; required columns enforced |
+| 👀 | **Live preview tables** | See how the first rows will be imported while you map, and the first rows with ✓ / ✕ and highlighted problem cells in Review |
+| ✅ | **Check before you import** | Every row validated with your importer's own rules, with exact messages, error counts per column and the first failing rows — [how it works](docs/how-it-works.md) |
+| 🔁 | **One rules class for forms *and* imports** | Define a record's rules once (`FieldRules`) and use them in the Filament form, the importer and an API — [rules](docs/rules.md) |
+| 🧩 | **File-level checks** | e.g. duplicates inside the file, in constant memory (`UniqueInFile`) — [rules](docs/rules.md) |
+| ⚡ | **Fast** | A verified fast path validates **50,000 rows in under a second** (fuzz-, exhaustive- and mutation-tested against Laravel) — [performance](docs/performance.md) |
+| 🐘 | **Huge files** | Streamed, never loaded into memory; **resumable chunked upload** with no PHP size limit; a console command for multi-GB files — [large files](docs/large-files.md) |
+| 📤 | **Export that round-trips (互通)** | Excel / CSV download of any list (filters and sorting applied) in the importer's own layout, a blank **import template**, and `verify()` to prove the file would import cleanly — [export](docs/export.md) |
+| 🔌 | **Headless API** | `HeadlessImport` runs the same upload → map → review → import pipeline from an API endpoint, a job or a command — [headless API](docs/headless-api.md) |
+| 🧾 | **Audit trail** *(optional)* | Who imported what (file SHA-256, mapping, review result, outcome) with an immutable event history and an **Import audit** page — [audit](docs/audit-and-approval.md) |
+| 🛡️ | **Approval flow** *(optional)* | Maker–checker: hold an import for a second person, by rule (e.g. over 1,000 rows) — [audit & approval](docs/audit-and-approval.md) |
+| 🏢 | **Multi-panel, multi-server** | Per-panel disk, directory and limits; shared-disk / database-backed state so any server can take any request; Horizon and Octane notes — [scaling](docs/scaling.md) |
+| 🌏 | **Translated** | English, 简体中文, 繁體中文 (TW / HK); plural-aware, locale-aware numbers and dates, RTL-safe — [localization](docs/localization.md) |
+| 🔒 | **Secure by default** | Locked wizard state, escaped output, confined uploads, allow-listed importer options, CSV formula guard on export; dedicated security tests and `composer audit` in CI |
+| 🧪 | **Quality gates** | PHPStan level 10, 110 Pest tests, security group, differential fuzz, mutation test, 50k–200k-row stress tests, CI matrix (PHP 8.2–8.4 × Laravel 12/13) — [testing](docs/testing.md) |
 
 ## Video tutorial
 
@@ -40,8 +62,8 @@ Chapters and how it was recorded: [docs/video-tutorial.md](docs/video-tutorial.m
 
 | Package | PHP | Laravel | Filament | Livewire | Status |
 | --- | --- | --- | --- | --- | --- |
-| **0.8.x** | 8.2 – 8.4 ¹ | **12** ✅ · **13** ✅ · 11.28+ ² | **5.x** (tested on 5.11) | 4.x (via Filament 5) | **Current** |
-| 0.2 – 0.7 | 8.2 – 8.4 ¹ | 12 · 13 | 5.x | 4.x | Superseded — upgrade to 0.8 |
+| **0.10.x** | 8.2 – 8.4 ¹ | **12** ✅ · **13** ✅ · 11.28+ ² | **5.x** (tested on 5.11) | 4.x (via Filament 5) | **Current** |
+| 0.2 – 0.9 | 8.2 – 8.4 ¹ | 12 · 13 | 5.x | 4.x | Superseded — upgrade to 0.10 |
 | — | — | — | 3.x · 4.x | — | Not supported (built on Filament 5's importer and schema APIs) |
 
 ✅ = the full test suite (Pest, 110 tests + fuzz, mutation and stress suites) passes on it · ¹ run on PHP 8.4; 8.2 and 8.3 are allowed by the constraints but were not run ·
@@ -61,7 +83,7 @@ Release notes: [CHANGELOG.md](CHANGELOG.md).
 
 ```bash
 composer config repositories.filament-import-wizard vcs git@github.com:solutionforest/filament-import-wizard.git
-composer require solution-forest/filament-import-wizard:^0.8
+composer require solution-forest/filament-import-wizard:^0.10
 php artisan migrate
 ```
 
@@ -97,6 +119,15 @@ protected function getHeaderActions(): array
 {
     return [ImportWizardAction::make()->importer(ContactImporter::class)];
 }
+```
+
+And the matching **export** button, plus the same pipeline as an **API** with no screen:
+
+```php
+ExportFileAction::make()->importer(ContactImporter::class)      // Excel / CSV / blank template, re-importable
+
+$review = HeadlessImport::for(ContactImporter::class)->upload($request->file('file'))->autoMap()->review();
+$review->isValid() && $import->user($user)->start();            // queued, like the wizard
 ```
 
 | Button on the list page | Map, in the slide-over | Review, in the slide-over | Done, with notifications |
