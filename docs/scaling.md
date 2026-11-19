@@ -14,6 +14,9 @@
 
 ## Horizon
 
+With `->parallelReview(queue: 'imports')` the Review step also runs on your workers (jobs `ReviewSlice`, same timeout setting), so give that queue enough
+workers — see [Performance](performance.md).
+
 Slices are ordinary queued jobs (`ImportCsvSlice`), tagged by Filament (`import{id}`) so they show up in Horizon.
 
 - **Route them** with your importer: `getJobQueue()`, `getJobConnection()`, `getJobBatchName()` — e.g. a dedicated `imports` queue and supervisor.

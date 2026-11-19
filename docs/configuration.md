@@ -11,6 +11,7 @@
 | `rowsPerReviewRequest(int)` | `2000` | Rows validated per poll in Review |
 | `maxCollectedErrors(int)` | `50` | Failing rows listed in Review |
 | `maxUploadSize(?int)` | `null` | Cap in KB |
+| `parallelReview(bool, ?queue, ?connection)` | off | Review as queue jobs, one per slice — [Performance](performance.md) |
 | `chunkedUploads(bool)` | `false` | [Resumable chunked upload](large-files.md) |
 | `audit(bool)` | `false` | [Audit trail](audit-and-approval.md) |
 | `requireApproval(bool\|Closure)` | `false` | Hold imports for approval (turns the audit on) |

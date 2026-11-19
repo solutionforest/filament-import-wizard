@@ -53,8 +53,45 @@ class RowValidator
      */
     public function validate(array $row, int $rowNumber = 0): array
     {
-        $errors = [];
+        return $this->validateMany([$row], $rowNumber)[0];
+    }
 
+    /**
+     * Validate a whole slice: the importer's rules row by row, then the file-level
+     * checks once over the slice (so they can batch their storage access).
+     *
+     * @param  list<array<string, mixed>>  $rows  file rows keyed by file header
+     * @return list<array<string, list<string>>> one error map per row, in order
+     */
+    public function validateMany(array $rows, int $firstRowNumber = 0): array
+    {
+        $errors = [];
+        $mapped = [];
+
+        foreach ($rows as $row) {
+            [$rowErrors, $data] = $this->validateRules($row);
+
+            $errors[] = $rowErrors;
+            $mapped[] = $data;
+        }
+
+        foreach ($this->checks as $check) {
+            foreach ($check->checkMany($mapped, $firstRowNumber) as $index => $checkErrors) {
+                foreach ($checkErrors as $column => $messages) {
+                    $errors[$index][$column] = [...($errors[$index][$column] ?? []), ...$messages];
+                }
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     * @return array{0: array<string, list<string>>, 1: array<string, mixed>} errors and the importer's view of the row
+     */
+    protected function validateRules(array $row): array
+    {
         try {
             $this->setState($row);
 
@@ -65,23 +102,18 @@ class RowValidator
             $this->importer->remapData();
             $this->importer->castData();
             $data = $this->getData($row);
+            $errors = [];
 
             try {
                 $this->importer->validateData();
             } catch (ValidationException $exception) {
                 $errors = $this->normalize($exception->errors());
             }
+
+            return [$errors, $data];
         } catch (Throwable $exception) {
-            return ['_row' => [$exception->getMessage()]];
+            return [['_row' => [$exception->getMessage()]], $row];
         }
-
-        foreach ($this->checks as $check) {
-            foreach ($check->check($data, $rowNumber) as $column => $messages) {
-                $errors[$column] = [...($errors[$column] ?? []), ...$messages];
-            }
-        }
-
-        return $errors;
     }
 
     /**

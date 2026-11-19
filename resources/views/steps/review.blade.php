@@ -4,7 +4,7 @@
     $valid = $livewire->reviewedRows - $livewire->invalidRows;
 @endphp
 
-<div class="iw-stack" @unless ($livewire->reviewFinished) wire:poll.250ms="reviewNextSlice" @endunless>
+<div class="iw-stack" @unless ($livewire->reviewFinished || $livewire->reviewError !== '') wire:poll.250ms="reviewNextSlice" @endunless>
     <x-filament::section>
         <div class="iw-row">
             <span>
@@ -20,6 +20,10 @@
             <p class="iw-bad">{{ trans_choice('filament-import-wizard::import.review.invalid', $livewire->invalidRows, ['count' => \Illuminate\Support\Number::format($livewire->invalidRows)]) }}</p>
         @endif
     </x-filament::section>
+
+    @if ($livewire->reviewError !== '')
+        <x-filament::section :compact="true"><p class="iw-bad">{{ $livewire->reviewError }}</p></x-filament::section>
+    @endif
 
     @if ($livewire->previewRows)
         <x-filament::section :compact="true">

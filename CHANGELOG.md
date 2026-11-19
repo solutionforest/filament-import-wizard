@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.0
+- Review is faster: the duplicate check is batched per slice (SQLite transaction / one query per 1,000 keys): 50k rows 12.4 s → 9.0 s. `RowCheck::checkMany()` and `SeenStore::markSeenMany()` added (custom checks must implement them), `RowValidator::validateMany()`.
+- Opt-in parallel Review on the queue: `->parallelReview()` (one `ReviewSlice` job per slice, results in `import_wizard_review_slices`).
+
 ## 0.6.0
 - Stress suite (`composer stress`, `IMPORT_WIZARD_STRESS_ROWS`) and `docs/performance.md`: 50k / 200k rows, flat memory, exact counts.
 - Full localization: audit page, status labels, error messages and JS messages moved to translation files; plural-aware counts, locale-aware numbers and dates, RTL-safe CSS.

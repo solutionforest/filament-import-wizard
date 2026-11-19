@@ -41,6 +41,7 @@ abstract class TestCase extends Orchestra
             Fixtures\TestPanelProvider::class,
             Fixtures\StaffPanelProvider::class,
             Fixtures\PlainPanelProvider::class,
+            Fixtures\ParallelPanelProvider::class,
         ];
     }
 

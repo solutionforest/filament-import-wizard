@@ -24,6 +24,7 @@ return [
         'invalid' => '{1} :count row has a problem (rows that fail validation are skipped on import)|[0,*] :count rows have problems (rows that fail validation are skipped on import)',
         'row' => 'Row :row',
         'import' => '{1} Import :count row|[0,*] Import :count rows',
+        'failed' => 'The review could not be completed (:count part failed). Check that a queue worker is running, then start over.',
         'submit_for_approval' => 'Submit for approval',
         'back' => 'Back to mapping',
     ],

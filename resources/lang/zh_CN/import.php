@@ -29,6 +29,7 @@ return [
         'invalid' => ':count 行有问题(验证失败的行将在导入时被跳过)',
         'row' => '第 :row 行',
         'import' => '导入 :count 行',
+        'failed' => '检查未能完成(:count 个部分失败)。请确认队列 worker 正在运行,然后重新开始。',
         'submit_for_approval' => '提交审批',
         'back' => '返回映射',
     ],

@@ -170,3 +170,28 @@ it('can keep the duplicate-check state in the shared database for multi-server s
     $other->finish('run-db');
     expect(DB::table('import_wizard_seen')->count())->toBe(0);
 });
+
+it('checks a whole slice at once with the same result as row by row, on both stores', function (string $store) {
+    $dir = sys_get_temp_dir().'/iw-batch-'.uniqid();
+    $make = fn () => $store === 'db' ? new DatabaseSeenStore : new SqliteSeenStore($dir);
+    $rows = [['email' => 'a@x.com'], ['email' => 'b@x.com'], ['email' => 'A@x.com '], ['email' => ''], ['email' => 'b@x.com'], ['email' => 'c@x.com']];
+
+    $batch = new UniqueInFile(['email'], $make());
+    $batch->begin('batch-'.$store, true);
+    $many = $batch->checkMany($rows, 1);
+
+    $single = new UniqueInFile(['email'], $make());
+    $single->begin('single-'.$store, true);
+    $one = array_map(fn ($row, $i) => $single->check($row, $i + 1), $rows, array_keys($rows));
+
+    expect(array_map(fn ($errors) => $errors === [], $many))->toBe([true, true, false, true, false, true])
+        ->and(array_map(fn ($errors) => array_keys($errors), $many))->toBe(array_map(fn ($errors) => array_keys($errors), $one));
+
+    // A second slice of the same run sees the first slice's keys.
+    $next = new UniqueInFile(['email'], $make());
+    $next->begin('batch-'.$store, false);
+    expect($next->checkMany([['email' => 'c@x.com'], ['email' => 'd@x.com']], 7)[0])->toHaveKey('email');
+
+    $batch->finish('batch-'.$store);
+    $single->finish('single-'.$store);
+})->with(['sqlite', 'db']);

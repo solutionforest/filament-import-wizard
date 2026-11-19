@@ -36,26 +36,46 @@ class UniqueInFile implements RowCheck
 
     public function check(array $data, int $rowNumber): array
     {
+        return $this->checkMany([$data], $rowNumber)[0];
+    }
+
+    public function checkMany(array $rows, int $firstRowNumber): array
+    {
+        $keys = [];
         $values = [];
 
-        foreach ($this->columns as $column) {
-            $value = $data[$column] ?? null;
-            $values[] = is_scalar($value) ? mb_strtolower(trim((string) $value)) : '';
+        foreach ($rows as $index => $data) {
+            $parts = [];
+
+            foreach ($this->columns as $column) {
+                $value = $data[$column] ?? null;
+                $parts[] = is_scalar($value) ? mb_strtolower(trim((string) $value)) : '';
+            }
+
+            // Blank keys are the job of `required`, not of a uniqueness check.
+            if (array_filter($parts, fn (string $part): bool => $part !== '') !== []) {
+                $keys[$index] = implode("\x1f", $parts);
+                $values[$index] = $parts;
+            }
         }
 
-        // Blank keys are the job of `required`, not of a uniqueness check.
-        if (array_filter($values, fn (string $value): bool => $value !== '') === []) {
-            return [];
+        $isNew = $keys === [] ? [] : array_combine(array_keys($keys), $this->store->markSeenMany(array_values($keys)));
+        $results = [];
+
+        foreach ($rows as $index => $_) {
+            if (! isset($keys[$index]) || $isNew[$index]) {
+                $results[] = [];
+
+                continue;
+            }
+
+            $results[] = [$this->columns[0] => [__('filament-import-wizard::rules.unique_in_file', [
+                'attribute' => implode(' + ', $this->columns),
+                'value' => implode(' + ', $values[$index]),
+            ])]];
         }
 
-        if ($this->store->markSeen(implode("\x1f", $values))) {
-            return [];
-        }
-
-        return [$this->columns[0] => [__('filament-import-wizard::rules.unique_in_file', [
-            'attribute' => implode(' + ', $this->columns),
-            'value' => implode(' + ', $values),
-        ])]];
+        return $results;
     }
 
     public function finish(string $runKey): void

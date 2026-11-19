@@ -6,7 +6,7 @@ The package is distributed from our own repository only. Add it as a Composer VC
 
 ```bash
 composer config repositories.filament-import-wizard vcs git@github.com:solutionforest/filament-import-wizard.git
-composer require solution-forest/filament-import-wizard:^0.6
+composer require solution-forest/filament-import-wizard:^0.7
 ```
 
 CI and deploy servers need a deploy key (or token) with read access to the repository.

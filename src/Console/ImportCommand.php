@@ -84,13 +84,13 @@ class ImportCommand extends Command
         $bar = $this->output->createProgressBar($total);
 
         while ($row < $total) {
-            $rows = $source->read($headers, $offset, 2000);
-            $read = 0;
+            $generator = $source->read($headers, $offset, 2000);
+            $rows = iterator_to_array($generator, false);
+            $read = count($rows);
+            $results = $validator->validateMany($rows, $row + 1);
 
-            foreach ($rows as $data) {
-                $read++;
+            foreach ($results as $errors) {
                 $row++;
-                $errors = $validator->validate($data, $row);
                 $bar->advance();
 
                 if ($errors === []) {
@@ -104,7 +104,7 @@ class ImportCommand extends Command
                 }
             }
 
-            $offset = $rows->getReturn();
+            $offset = $generator->getReturn();
 
             if ($read === 0) {
                 break;

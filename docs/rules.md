@@ -91,7 +91,7 @@ protected function getRowChecks(): array
 ```
 
 `UniqueInFile` remembers what it has seen in a store outside PHP, so memory stays flat for millions of rows. Behind a
-load balancer set `IMPORT_WIZARD_SEEN_STORE=database` ([Scaling](scaling.md)). Implement `Checks\RowCheck` for your own checks.
+load balancer set `IMPORT_WIZARD_SEEN_STORE=database` ([Scaling](scaling.md)). Implement `Checks\RowCheck` for your own checks (`check()` for one row, `checkMany()` for a whole slice so you can batch storage access). A page that declares row checks reviews in the polled single pass even when `parallelReview()` is on.
 
 > File-level checks inform Review only. The queued import runs slices in parallel and uses your importer's
 > `resolveRecord()`, so a duplicate row updates the earlier one — fix the file if that isn't what you want.

@@ -32,6 +32,7 @@ use SolutionForest\FilamentImportWizard\Support\ColumnMapper;
 use SolutionForest\FilamentImportWizard\Support\CsvSource;
 use SolutionForest\FilamentImportWizard\Support\FileNormalizer;
 use SolutionForest\FilamentImportWizard\Support\ImportStarter;
+use SolutionForest\FilamentImportWizard\Support\ParallelReview;
 use SolutionForest\FilamentImportWizard\Support\RowValidator;
 
 /**
@@ -120,6 +121,13 @@ abstract class ImportWizardPage extends Page
 
     #[Locked]
     public string $reviewToken = '';
+
+    /** Set while a parallel (queued) review of the file is running. */
+    #[Locked]
+    public string $reviewBatchId = '';
+
+    #[Locked]
+    public string $reviewError = '';
 
     /** @var list<array{row: int, errors: array<string, list<string>>}> */
     #[Locked]
@@ -468,6 +476,8 @@ abstract class ImportWizardPage extends Page
         $this->errorRows = $this->errorsByColumn = $this->previewRows = [];
         $this->reviewFinished = false;
         $this->reviewToken = Str::random(16);
+        $this->reviewBatchId = $this->usesParallelReview() ? $this->startParallelReview($source) : '';
+        $this->reviewError = '';
         $this->step = self::STEP_REVIEW;
     }
 
@@ -478,7 +488,13 @@ abstract class ImportWizardPage extends Page
     #[Exposed]
     public function reviewNextSlice(): void
     {
-        if ($this->step !== self::STEP_REVIEW || $this->reviewFinished) {
+        if ($this->step !== self::STEP_REVIEW || $this->reviewFinished || $this->reviewError !== '') {
+            return;
+        }
+
+        if ($this->reviewBatchId !== '') {
+            $this->collectParallelReview();
+
             return;
         }
 
@@ -493,13 +509,14 @@ abstract class ImportWizardPage extends Page
         );
 
         $perRequest = $this->getRowsPerReviewRequest();
-        $rows = $source->read($source->getHeaders(), $this->reviewOffset, $perRequest);
-        $count = 0;
+        $generator = $source->read($source->getHeaders(), $this->reviewOffset, $perRequest);
+        $rows = iterator_to_array($generator, false);
+        $count = count($rows);
+        $results = $validator->validateMany($rows, $this->reviewedRows + 1);
 
-        foreach ($rows as $row) {
-            $count++;
-            $rowNumber = $this->reviewedRows + $count;
-            $errors = $validator->validate($row, $rowNumber);
+        foreach ($rows as $index => $row) {
+            $errors = $results[$index];
+            $rowNumber = $this->reviewedRows + $index + 1;
 
             if ($rowNumber <= $this->getPreviewLimit()) {
                 $this->previewRows[] = ['row' => $rowNumber, 'values' => $this->mapRow($row, $this->getColumnMap()), 'errors' => $errors];
@@ -520,22 +537,81 @@ abstract class ImportWizardPage extends Page
             }
         }
 
-        $this->reviewOffset = $rows->getReturn();
+        $this->reviewOffset = $generator->getReturn();
         $this->reviewedRows += $count;
         $this->reviewFinished = $count < $perRequest || $this->reviewedRows >= $this->totalRows;
 
         if ($this->reviewFinished) {
             $validator->finish($this->reviewToken);
 
-            $audit = $this->getAudit();
-
-            if ($audit instanceof ImportAudit) {
-                app(AuditRecorder::class)->reviewed($audit, $this->getColumnMap(), $this->getImporterOptions(), $this->totalRows, $this->invalidRows, [
-                    'errors_by_column' => $this->errorsByColumn,
-                    'sample' => $this->errorRows,
-                ]);
-            }
+            $this->finishReview();
         }
+    }
+
+    protected function finishReview(): void
+    {
+        $audit = $this->getAudit();
+
+        if ($audit instanceof ImportAudit) {
+            app(AuditRecorder::class)->reviewed($audit, $this->getColumnMap(), $this->getImporterOptions(), $this->totalRows, $this->invalidRows, [
+                'errors_by_column' => $this->errorsByColumn,
+                'sample' => $this->errorRows,
+            ]);
+        }
+    }
+
+    protected function usesParallelReview(): bool
+    {
+        return $this->getPlugin()->usesParallelReview() && $this->getRowChecks() === [];
+    }
+
+    protected function startParallelReview(CsvSource $source): string
+    {
+        $userId = Filament::auth()->id();
+
+        return (new ParallelReview)->start(
+            $this->reviewToken,
+            $source,
+            static::getImporter(),
+            $this->getColumnMap(),
+            $this->getImporterOptions(),
+            $this->getRowsPerReviewRequest(),
+            $this->getMaxCollectedErrors(),
+            $this->getPreviewLimit(),
+            is_int($userId) || is_string($userId) ? $userId : null,
+            Filament::getAuthGuard(),
+            $this->getPlugin()->getReviewQueue(),
+            $this->getPlugin()->getReviewConnection(),
+        );
+    }
+
+    /**
+     * Pull the progress of the queued review into the page.
+     */
+    protected function collectParallelReview(): void
+    {
+        $review = new ParallelReview;
+        $data = $review->collect($this->reviewToken, $this->reviewBatchId, $this->getMaxCollectedErrors());
+
+        $this->reviewedRows = $data['rows'];
+        $this->invalidRows = $data['invalid'];
+        $this->errorsByColumn = $data['errorsByColumn'];
+        $this->errorRows = $data['sample'];
+        $this->previewRows = $data['preview'];
+
+        if (! $data['finished']) {
+            return;
+        }
+
+        if ($data['failed'] > 0 || $data['rows'] < $this->totalRows) {
+            $this->reviewError = __('filament-import-wizard::import.review.failed', ['count' => max(1, $data['failed'])]);
+
+            return;
+        }
+
+        $this->reviewFinished = true;
+        $review->forget($this->reviewToken);
+        $this->finishReview();
     }
 
     /**
@@ -634,7 +710,7 @@ abstract class ImportWizardPage extends Page
 
     public function startOver(): void
     {
-        $this->reset(['step', 'uploadPath', 'filePath', 'fileName', 'sheets', 'headers', 'sample', 'totalRows', 'reviewOffset', 'reviewedRows', 'invalidRows', 'reviewFinished', 'reviewToken', 'errorRows', 'errorsByColumn', 'previewRows', 'importId', 'auditId', 'awaitingApproval']);
+        $this->reset(['step', 'uploadPath', 'filePath', 'fileName', 'sheets', 'headers', 'sample', 'totalRows', 'reviewOffset', 'reviewedRows', 'invalidRows', 'reviewFinished', 'reviewToken', 'reviewBatchId', 'reviewError', 'errorRows', 'errorsByColumn', 'previewRows', 'importId', 'auditId', 'awaitingApproval']);
         $this->data = [];
         $this->content->fill();
 

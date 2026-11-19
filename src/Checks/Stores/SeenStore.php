@@ -24,6 +24,15 @@ interface SeenStore
     public function markSeen(string $key): bool;
 
     /**
+     * Record many keys at once (one transaction / one round trip), in order.
+     * A key repeated inside $keys is new only the first time.
+     *
+     * @param  list<string>  $keys
+     * @return list<bool> per key: true when new
+     */
+    public function markSeenMany(array $keys): array;
+
+    /**
      * Drop the state of a run.
      */
     public function finish(string $runKey): void;

@@ -103,17 +103,16 @@ it('reviews every row (rules + duplicate check) in flat memory', function () {
         $invalid = 0;
 
         do {
-            $read = 0;
-            $rows = $source->read($headers, $offset, 2000);
+            $generator = $source->read($headers, $offset, 2000);
+            $rows = iterator_to_array($generator, false);
 
-            foreach ($rows as $data) {
-                $read++;
+            foreach ($validator->validateMany($rows, $row + 1) as $errors) {
                 $row++;
-                $validator->validate($data, $row) === [] || $invalid++;
+                $errors === [] || $invalid++;
             }
 
-            $offset = $rows->getReturn();
-        } while ($read === 2000);
+            $offset = $generator->getReturn();
+        } while (count($rows) === 2000);
 
         return $invalid;
     });

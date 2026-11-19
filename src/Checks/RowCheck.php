@@ -27,6 +27,16 @@ interface RowCheck
     public function check(array $data, int $rowNumber): array;
 
     /**
+     * Check a whole slice of rows at once (lets a check batch its storage
+     * access). Row numbers run from $firstRowNumber upwards. Must give the same
+     * result as calling {@see check()} on each row in order.
+     *
+     * @param  list<array<string, mixed>>  $rows
+     * @return list<array<string, list<string>>> one error map per row (empty when fine)
+     */
+    public function checkMany(array $rows, int $firstRowNumber): array;
+
+    /**
      * Release the state of a run.
      */
     public function finish(string $runKey): void;

@@ -37,6 +37,30 @@ class SqliteSeenStore implements SeenStore
         return $statement->rowCount() === 1;
     }
 
+    public function markSeenMany(array $keys): array
+    {
+        $pdo = $this->connection();
+        $statement = $pdo->prepare('INSERT OR IGNORE INTO seen (hash) VALUES (?)');
+        $result = [];
+
+        $pdo->beginTransaction();
+
+        try {
+            foreach ($keys as $key) {
+                $statement->execute([hash('xxh128', $key, true)]);
+                $result[] = $statement->rowCount() === 1;
+            }
+
+            $pdo->commit();
+        } catch (\Throwable $exception) {
+            $pdo->rollBack();
+
+            throw $exception;
+        }
+
+        return $result;
+    }
+
     public function finish(string $runKey): void
     {
         $this->pdo = null;

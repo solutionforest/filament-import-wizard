@@ -48,6 +48,14 @@ final class ImportWizardPlugin implements Plugin
 
     protected bool $chunkedUploads = false;
 
+    protected bool $parallelReview = false;
+
+    protected ?string $reviewQueue = null;
+
+    protected ?string $reviewConnection = null;
+
+    protected bool $allowSyncReview = false;
+
     protected bool $audit = false;
 
     /** @var bool|Closure(ImportAudit): bool */
@@ -268,6 +276,49 @@ final class ImportWizardPlugin implements Plugin
         $this->chunkedUploads = $enabled;
 
         return $this;
+    }
+
+    /**
+     * Review the file as a batch of queue jobs, one per slice, so it finishes
+     * in roughly (sequential time ÷ workers). Needs a real queue and running
+     * workers; with the `sync` driver, or when the page declares file-level
+     * `getRowChecks()` (which are inherently sequential), Review falls back to
+     * the polled single pass. `$allowSync` forces the batch even on `sync` (tests).
+     */
+    public function parallelReview(bool $enabled = true, ?string $queue = null, ?string $connection = null, bool $allowSync = false): static
+    {
+        $this->parallelReview = $enabled;
+        $this->reviewQueue = $queue;
+        $this->reviewConnection = $connection;
+        $this->allowSyncReview = $allowSync;
+
+        return $this;
+    }
+
+    public function usesParallelReview(): bool
+    {
+        if (! $this->parallelReview) {
+            return false;
+        }
+
+        if ($this->allowSyncReview) {
+            return true;
+        }
+
+        $connection = $this->reviewConnection ?? config('queue.default');
+        $driver = is_string($connection) ? config("queue.connections.{$connection}.driver") : null;
+
+        return $driver !== 'sync';
+    }
+
+    public function getReviewQueue(): ?string
+    {
+        return $this->reviewQueue;
+    }
+
+    public function getReviewConnection(): ?string
+    {
+        return $this->reviewConnection;
     }
 
     public function usesChunkedUploads(): bool

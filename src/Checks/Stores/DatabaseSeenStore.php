@@ -35,6 +35,40 @@ class DatabaseSeenStore implements SeenStore
         ]) === 1;
     }
 
+    public function markSeenMany(array $keys): array
+    {
+        $hashes = array_map(fn (string $key): string => hash('xxh128', $key), $keys);
+        $existing = [];
+
+        // One query per 1,000 keys instead of one per row.
+        foreach (array_chunk(array_values(array_unique($hashes)), 1000) as $chunk) {
+            foreach ($this->table()->where('run_key', $this->runKey)->whereIn('hash', $chunk)->pluck('hash') as $hash) {
+                if (is_string($hash)) {
+                    $existing[$hash] = true;
+                }
+            }
+        }
+
+        $result = [];
+        $fresh = [];
+
+        foreach ($hashes as $hash) {
+            $isNew = ! isset($existing[$hash]);
+            $result[] = $isNew;
+
+            if ($isNew) {
+                $existing[$hash] = true;
+                $fresh[] = ['run_key' => $this->runKey, 'hash' => $hash];
+            }
+        }
+
+        foreach (array_chunk($fresh, 1000) as $chunk) {
+            $this->table()->insertOrIgnore($chunk);
+        }
+
+        return $result;
+    }
+
     public function finish(string $runKey): void
     {
         $this->table()->where('run_key', $runKey)->delete();

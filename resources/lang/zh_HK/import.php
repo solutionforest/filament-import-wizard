@@ -29,6 +29,7 @@ return [
         'invalid' => ':count 行有問題(驗證失敗的行將在匯入時略過)',
         'row' => '第 :row 行',
         'import' => '匯入 :count 行',
+        'failed' => '檢查未能完成(:count 個部分失敗)。請確認佇列 worker 正在運行,然後重新開始。',
         'submit_for_approval' => '提交審批',
         'back' => '返回對應',
     ],
