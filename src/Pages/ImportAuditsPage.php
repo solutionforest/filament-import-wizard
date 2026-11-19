@@ -18,6 +18,7 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use SolutionForest\FilamentImportWizard\Audit\ImportApprovals;
+use SolutionForest\FilamentImportWizard\Importers\ModelImporters;
 use SolutionForest\FilamentImportWizard\ImportWizardPlugin;
 use SolutionForest\FilamentImportWizard\Models\AuditStatus;
 use SolutionForest\FilamentImportWizard\Models\ImportAudit;
@@ -57,7 +58,7 @@ class ImportAuditsPage extends Page implements HasTable
                 TextColumn::make('id')->label('#')->sortable(),
                 TextColumn::make('created_at')->label(__('filament-import-wizard::audit.columns.when'))->dateTime()->sortable(),
                 TextColumn::make('user.name')->label(__('filament-import-wizard::audit.columns.uploaded_by'))->placeholder('—'),
-                TextColumn::make('file_name')->label(__('filament-import-wizard::audit.columns.file'))->searchable()->limit(30)->description(fn (ImportAudit $record): string => class_basename($record->importer)),
+                TextColumn::make('file_name')->label(__('filament-import-wizard::audit.columns.file'))->searchable()->limit(30)->description(fn (ImportAudit $record): string => ModelImporters::basename($record->importer)),
                 TextColumn::make('total_rows')->label(__('filament-import-wizard::audit.columns.rows'))->numeric(),
                 TextColumn::make('invalid_rows')->label(__('filament-import-wizard::audit.columns.problems'))->numeric(),
                 TextColumn::make('status')->label(__('filament-import-wizard::audit.columns.status'))->badge(),

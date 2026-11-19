@@ -55,4 +55,8 @@ return [
     ],
     'start_over' => 'Start over',
     'started_over' => 'Import reset',
+    'model_importer' => [
+        'completed' => 'Imported :count row(s).',
+        'completed_with_failures' => 'Imported :count row(s); :failed failed.',
+    ],
 ];

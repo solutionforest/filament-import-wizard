@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use LogicException;
 use SolutionForest\FilamentImportWizard\Export\FileExport;
+use SolutionForest\FilamentImportWizard\Importers\ModelImporters;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
@@ -136,7 +137,7 @@ class ExportFileAction extends Action
         $base = $this->evaluate($this->filename);
         $base = is_string($base) && $base !== ''
             ? $base
-            : Str::of(class_basename($importer))->beforeLast('Importer')->kebab()->plural()->toString().($template ? '-template' : '-'.now()->format('Y-m-d'));
+            : Str::of(ModelImporters::basename($importer))->beforeLast('Importer')->kebab()->plural()->toString().($template ? '-template' : '-'.now()->format('Y-m-d'));
 
         return $base.'.'.$format;
     }

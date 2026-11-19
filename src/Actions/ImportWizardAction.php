@@ -9,8 +9,10 @@ use Filament\Actions\Action;
 use Filament\Actions\Imports\Importer;
 use Filament\Support\Enums\Width;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use LogicException;
+use SolutionForest\FilamentImportWizard\Importers\ModelImporters;
 
 /**
  * Opens the import wizard in a slide-over from anywhere an action can live — a resource
@@ -72,6 +74,18 @@ class ImportWizardAction extends Action
     }
 
     /**
+     * Quick start without an importer class: one is generated from the model's table
+     * (fillable columns, types and nullability become casts and rules). Write an importer
+     * class when you need relationships, upserts or custom rules.
+     *
+     * @param  class-string<Model>  $model
+     */
+    public function forModel(string $model): static
+    {
+        return $this->importer(ModelImporters::for($model));
+    }
+
+    /**
      * Filament notifications when the import starts and when it finishes. Defaults follow
      * `ImportWizardPlugin::notifications()` (both on); the finish toast is skipped on the
      * `sync` queue, where Filament already sends its own completion notification.
@@ -100,6 +114,6 @@ class ImportWizardAction extends Action
 
     protected function getEntityLabel(): string
     {
-        return Str::of(class_basename($this->getImporter()))->beforeLast('Importer')->headline()->lower()->plural()->toString();
+        return Str::of(ModelImporters::basename($this->getImporter()))->beforeLast('Importer')->headline()->lower()->plural()->toString();
     }
 }

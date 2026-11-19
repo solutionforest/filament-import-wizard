@@ -60,4 +60,8 @@ return [
     ],
     'start_over' => '重新開始',
     'started_over' => '匯入已重設',
+    'model_importer' => [
+        'completed' => '已匯入 :count 列。',
+        'completed_with_failures' => '已匯入 :count 列,:failed 列失敗。',
+    ],
 ];

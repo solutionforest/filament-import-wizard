@@ -27,6 +27,7 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use RuntimeException;
 use SolutionForest\FilamentImportWizard\Audit\AuditRecorder;
 use SolutionForest\FilamentImportWizard\Checks\RowCheck;
+use SolutionForest\FilamentImportWizard\Importers\ModelImporters;
 use SolutionForest\FilamentImportWizard\ImportWizardPlugin;
 use SolutionForest\FilamentImportWizard\Livewire\ImportWizardModal;
 use SolutionForest\FilamentImportWizard\Models\ImportAudit;
@@ -159,7 +160,7 @@ trait ManagesImportWizard
      */
     protected function getEntityLabel(): string
     {
-        return Str::of(class_basename($this->importerClass()))->beforeLast('Importer')->headline()->lower()->plural()->toString();
+        return Str::of(ModelImporters::basename($this->importerClass()))->beforeLast('Importer')->headline()->lower()->plural()->toString();
     }
 
     /**

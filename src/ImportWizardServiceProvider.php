@@ -12,6 +12,7 @@ use Livewire\Livewire;
 use SolutionForest\FilamentImportWizard\Audit\AuditRecorder;
 use SolutionForest\FilamentImportWizard\Console\ImportCommand;
 use SolutionForest\FilamentImportWizard\Console\PruneUploadsCommand;
+use SolutionForest\FilamentImportWizard\Importers\ModelImporters;
 use SolutionForest\FilamentImportWizard\Livewire\ImportWizardModal;
 use SolutionForest\FilamentImportWizard\Models\ImportAudit;
 
@@ -22,6 +23,8 @@ class ImportWizardServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/import-wizard.php', 'import-wizard');
 
         $this->commands([ImportCommand::class, PruneUploadsCommand::class]);
+
+        ModelImporters::register();
     }
 
     public function boot(): void

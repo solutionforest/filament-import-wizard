@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/Filament-5.x-FDAE4B" alt="Filament 5">
   <img src="https://img.shields.io/badge/PHPStan-level%2010-brightgreen?logo=php&logoColor=white" alt="PHPStan level 10">
   <a href="https://github.com/solutionforest/filament-import-wizard/actions/workflows/ci.yml"><img src="https://github.com/solutionforest/filament-import-wizard/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <img src="https://img.shields.io/badge/release-0.12.0-4f46e5" alt="Release 0.12.0">
+  <img src="https://img.shields.io/badge/release-0.13.0-4f46e5" alt="Release 0.13.0">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License: MIT">
 </p>
 
@@ -26,6 +26,7 @@ Upload a file → map the columns → review every row → import (queued) → e
 | Feature | What it does |
 | --- | --- |
 | **Four-step import wizard** | Upload → Map → Review → Import, as a page or in a [slide-over](docs/slide-over.md) opened from a button on any list page, with optional start / done **Filament notifications** |
+| **Quick start from a model** | `ImportWizardAction::make()->forModel(Product::class)` builds the importer from the table (types, nullability, lengths become casts and rules) — [quick start](docs/quick-start-model.md) |
 | **Translatable fields** | One column per language (`title_en`, `title_ar`) becomes one translated attribute, with auto-mapping and per-language validation — [translatable](docs/translatable.md) |
 | **CSV, XLSX, XLS, ODS** | Multi-sheet workbooks, odd encodings (UTF-16, Windows-1252) and delimiters handled; typed cells (dates, booleans, formula results) read right — [file formats](docs/file-formats.md) |
 | **Works with your spreadsheet library** | Files from **maatwebsite/excel, spatie/simple-excel, rap2hpoutre/fast-excel**, the box/spout engine of nikazooz/laravel-simplesheet and xlswriter-format files import cleanly, and our exports read back in them — tested with the real libraries — [interop](docs/interop.md) |
@@ -43,7 +44,7 @@ Upload a file → map the columns → review every row → import (queued) → e
 | **Multi-panel, multi-server** | Per-panel disk, directory and limits; shared-disk / database-backed state so any server can take any request; Horizon and Octane notes — [scaling](docs/scaling.md) |
 | **Translated** | English, 简体中文, 繁體中文 (TW / HK); plural-aware, locale-aware numbers and dates, RTL-safe — [localization](docs/localization.md) |
 | **Secure by default** | Locked wizard state, escaped output, confined uploads, allow-listed importer options, CSV formula guard on export; dedicated security tests and `composer audit` in CI |
-| **Quality gates** | PHPStan level 10, 124 Pest tests, security group, differential fuzz, mutation test, 50k–200k-row stress tests, CI matrix (PHP 8.2–8.4 × Laravel 12/13) — [testing](docs/testing.md) |
+| **Quality gates** | PHPStan level 10, 130 Pest tests, security group, differential fuzz, mutation test, 50k–200k-row stress tests, CI matrix (PHP 8.2–8.4 × Laravel 12/13) — [testing](docs/testing.md) |
 
 ## Video tutorial
 
@@ -57,11 +58,11 @@ Chapters and how it was recorded: [docs/video-tutorial.md](docs/video-tutorial.m
 
 | Package | PHP | Laravel | Filament | Livewire | Status |
 | --- | --- | --- | --- | --- | --- |
-| **0.10 – 0.12** | 8.2 – 8.4 ¹ | **12** ✅ · **13** ✅ · 11.28+ ² | **5.x** (tested on 5.11) | 4.x (via Filament 5) | **Current** |
-| 0.2 – 0.9 | 8.2 – 8.4 ¹ | 12 · 13 | 5.x | 4.x | Superseded — upgrade to 0.12 |
+| **0.10 – 0.13** | 8.2 – 8.4 ¹ | **12** ✅ · **13** ✅ · 11.28+ ² | **5.x** (tested on 5.11) | 4.x (via Filament 5) | **Current** |
+| 0.2 – 0.9 | 8.2 – 8.4 ¹ | 12 · 13 | 5.x | 4.x | Superseded — upgrade to 0.13 |
 | — | — | — | 3.x · 4.x | — | Not supported (built on Filament 5's importer and schema APIs) |
 
-✅ = the full test suite (Pest, 124 tests + fuzz, mutation and stress suites) passes on it · ¹ run on PHP 8.4; 8.2 and 8.3 are allowed by the constraints but were not run ·
+✅ = the full test suite (Pest, 130 tests + fuzz, mutation and stress suites) passes on it · ¹ run on PHP 8.4; 8.2 and 8.3 are allowed by the constraints but were not run ·
 ² allowed by Filament 5, not run — every Laravel 11.x release is currently flagged by Composer security advisories, so upgrade to 12+.
 
 | Environment | Status |
@@ -78,7 +79,7 @@ Release notes: [CHANGELOG.md](CHANGELOG.md).
 
 ```bash
 composer config repositories.filament-import-wizard vcs https://github.com/solutionforest/filament-import-wizard.git
-composer require solution-forest/filament-import-wizard:^0.12
+composer require solution-forest/filament-import-wizard:^0.13
 php artisan migrate
 ```
 
@@ -141,6 +142,7 @@ $review->isValid() && $import->user($user)->start();            // queued, like 
 | [Slide-over action](docs/slide-over.md) | Open the wizard from a button, with start / done notifications |
 | [Rules](docs/rules.md) | One rules class for forms and imports; file-level checks |
 | [File formats](docs/file-formats.md) | CSV, Excel, encodings, sheets |
+| [Quick start from a model](docs/quick-start-model.md) | No importer class yet: generate one from the table |
 | [Translatable fields](docs/translatable.md) | One column per language into one translated attribute |
 | [Other spreadsheet libraries](docs/interop.md) | maatwebsite/excel, spatie/simple-excel, fast-excel, simplesheet, xlswriter |
 | [Large files](docs/large-files.md) | Chunked upload, console import |

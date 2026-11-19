@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.0
+- **Quick start from a model**: `ImportWizardAction::make()->forModel(Product::class)` (or `ModelImporters::for(Product::class)` for the headless API and console) generates an importer from the model's table — fillable columns, types, nullability and `varchar` lengths become casts and rules; a blank cell in a NOT NULL column uses the column default. The class is generated from its own name, so queue workers define it too; it is only ever generated for real Eloquent models. `docs/quick-start-model.md`.
+- Translations (en, zh_CN, zh_TW, zh_HK) for the generated importer's completion message.
+
 ## 0.12.0
 - **Translatable fields**: `LocaleColumns::make('title', ['en', 'ar'])->columns()` turns `title_en` / `title_ar` file columns into one translated attribute — auto-mapped, validated per language, works with spatie/laravel-translatable or any array / JSON attribute; a blank cell never wipes an existing translation. `docs/translatable.md`.
 - **Fixed**: Excel files whose rows are padded with empty styled cells (up to 256 or 16,384 columns) no longer show dozens of blank file columns in the mapping step.
