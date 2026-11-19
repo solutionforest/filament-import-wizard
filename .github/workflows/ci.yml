@@ -96,3 +96,20 @@ jobs:
         run: vendor/bin/pest --group=security
       - name: Known vulnerabilities in dependencies
         run: composer audit --locked || composer audit
+
+  interop:
+    name: Interop with other spreadsheet libraries
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, intl, pdo_sqlite, zip, gd, dom, fileinfo, simplexml, xmlreader, xmlwriter
+          coverage: none
+          tools: composer:v2
+      - uses: ramsey/composer-install@v4
+      - name: Install the libraries (box/spout 3 is the engine of nikazooz/laravel-simplesheet)
+        run: composer require --dev --no-interaction -W maatwebsite/excel spatie/simple-excel rap2hpoutre/fast-excel "box/spout:^3.3"
+      - name: Files written by each library import, and our exports read back in each
+        run: vendor/bin/pest tests/Interop tests/FileInteropTest.php

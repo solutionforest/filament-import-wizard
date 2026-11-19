@@ -18,6 +18,7 @@ use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Livewire\LivewireServiceProvider;
+use Maatwebsite\Excel\ExcelServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 use SolutionForest\FilamentImportWizard\ImportWizardServiceProvider;
 
@@ -29,6 +30,7 @@ abstract class TestCase extends Orchestra
             BladeIconsServiceProvider::class,
             BladeHeroiconsServiceProvider::class,
             LivewireServiceProvider::class,
+            ...(class_exists(ExcelServiceProvider::class) ? [ExcelServiceProvider::class] : []),
             SupportServiceProvider::class,
             ActionsServiceProvider::class,
             FormsServiceProvider::class,

@@ -81,7 +81,10 @@
         ]
     },
     "suggest": {
-        "phpoffice/phpspreadsheet": "Required to import legacy .xls files (loaded fully into memory, so keep those files modest)."
+        "phpoffice/phpspreadsheet": "Required to import legacy .xls files (loaded fully into memory, so keep those files modest).",
+        "maatwebsite/excel": "Files written by Laravel Excel import fine (it needs no integration); use a StringValueBinder for codes and phone numbers.",
+        "spatie/simple-excel": "Files written by Simple Excel import fine.",
+        "rap2hpoutre/fast-excel": "Files written by Fast Excel import fine."
     },
     "support": {
         "source": "https://github.com/solutionforest/filament-import-wizard"

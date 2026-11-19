@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.1
+- **Interop verified with the real libraries**: files written by maatwebsite/excel (xlsx/csv/xls/ods), spatie/simple-excel, rap2hpoutre/fast-excel and box/spout 3 (nikazooz/laravel-simplesheet's engine) import cleanly, and our exports read back in each; xlswriter-format files (XlsxWriter fixtures) too. New CI `interop` job; `docs/interop.md`.
+- **Fixed**: formula cells were read as the formula text (`=D2*2`) instead of their cached result; legacy `.xls` dates arrived as Excel serial numbers and booleans as `TRUE` — now `Y-m-d H:i:s` and `1`/`0`.
+
 ## 0.10.0
 - **Export**: `FileExport` and `ExportFileAction` — download records as Excel / CSV (or a blank template) in the importer's own layout, so an exported file imports straight back;
   `verify()` runs the exported file through the importer's rules. Streams in chunks (50k rows in ~2.4 s, flat memory); CSV formula-injection guard that the importer removes again.

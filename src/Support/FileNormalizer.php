@@ -6,9 +6,11 @@ namespace SolutionForest\FilamentImportWizard\Support;
 
 use Illuminate\Support\Facades\Storage;
 use OpenSpout\Common\Entity\Cell;
+use OpenSpout\Common\Entity\Cell\FormulaCell;
 use OpenSpout\Reader\ODS\Reader as OdsReader;
 use OpenSpout\Reader\XLSX\Reader as XlsxReader;
 use PhpOffice\PhpSpreadsheet\Reader\Xls;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 use RuntimeException;
 
 /**
@@ -125,7 +127,7 @@ class FileNormalizer
             }
 
             foreach ($sheet->getRowIterator() as $row) {
-                $this->writeRow($out, array_map(fn (Cell $cell): mixed => $cell->getValue(), $row->getCells()));
+                $this->writeRow($out, array_map(fn (Cell $cell): mixed => $cell instanceof FormulaCell ? $cell->getComputedValue() : $cell->getValue(), $row->getCells()));
             }
 
             break;
@@ -142,8 +144,27 @@ class FileNormalizer
         $spreadsheet = $this->xlsReader()->load($local);
         $worksheet = $spreadsheet->getSheet($sheetIndex);
 
-        foreach ($worksheet->toArray(null, true, true, false) as $row) {
-            $this->writeRow($out, $row);
+        foreach ($worksheet->getRowIterator() as $row) {
+            $cells = $row->getCellIterator();
+            $cells->setIterateOnlyExistingCells(false);
+            $values = [];
+
+            foreach ($cells as $cell) {
+                try {
+                    $value = $cell->getCalculatedValue();
+                } catch (\Throwable) {
+                    $value = $cell->getValue(); // a formula PhpSpreadsheet cannot evaluate: keep what is stored
+                }
+
+                // Dates are numbers with a date format: write them the way every other format does.
+                if (is_numeric($value) && Date::isDateTime($cell)) {
+                    $value = Date::excelToDateTimeObject((float) $value);
+                }
+
+                $values[] = $value;
+            }
+
+            $this->writeRow($out, $values);
         }
 
         $spreadsheet->disconnectWorksheets();
@@ -156,7 +177,8 @@ class FileNormalizer
         }
 
         $reader = new Xls;
-        $reader->setReadDataOnly(true);
+        // Cell formats are needed to tell dates from numbers.
+        $reader->setReadDataOnly(false);
 
         return $reader;
     }
