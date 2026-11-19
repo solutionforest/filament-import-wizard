@@ -23,7 +23,7 @@ jobs:
     name: Code style (Pint)
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
@@ -37,7 +37,7 @@ jobs:
     name: PHPStan level 10
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
@@ -60,7 +60,7 @@ jobs:
           - { php: '8.3', laravel: '13', testbench: '^11.0', workbench: '^11.0' }
           - { php: '8.4', laravel: '13', testbench: '^11.0', workbench: '^11.0' }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
@@ -84,7 +84,7 @@ jobs:
     name: Security tests + dependency audit
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
