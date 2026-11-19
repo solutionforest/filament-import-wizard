@@ -8,6 +8,13 @@ It sits on top of Filament's own `Importer` classes, so **your existing importer
 
 ![Review step](docs/images/3-review.png)
 
+## Video tutorial
+
+[![Watch the 1-minute tutorial](docs/video/tutorial-preview.gif)](docs/video/tutorial.mp4)
+
+▶ **[Watch the tutorial (mp4, 57 s)](docs/video/tutorial.mp4)** — upload an Excel file, map columns with live preview, review
+every row, submit for approval, approve, and read the audit trail. Chapters and how it was recorded: [docs/video-tutorial.md](docs/video-tutorial.md).
+
 ## Why use it
 
 - **CSV, XLSX, XLS, ODS** — multi-sheet workbooks, odd encodings and delimiters handled for you.
@@ -17,6 +24,27 @@ It sits on top of Filament's own `Importer` classes, so **your existing importer
 - **One rules class** for Filament forms *and* imports.
 - **Optional audit trail and approval step** (maker–checker).
 - Multi-panel, multi-server, Horizon and Octane friendly. PHPStan level 10.
+
+## Supported versions
+
+| Package | PHP | Laravel | Filament | Livewire | Status |
+| --- | --- | --- | --- | --- | --- |
+| **0.5.x** | 8.2 – 8.4 ¹ | **12** ✅ · **13** ✅ · 11.28+ ² | **5.x** (tested on 5.11) | 4.x (via Filament 5) | **Current** |
+| 0.2 – 0.4 | 8.2 – 8.4 ¹ | 12 · 13 | 5.x | 4.x | Superseded — upgrade to 0.5 |
+| — | — | — | 3.x · 4.x | — | Not supported (built on Filament 5's importer and schema APIs) |
+
+✅ = the full test suite (Pest, 39 tests) passes on it · ¹ run on PHP 8.4; 8.2 and 8.3 are allowed by the constraints but were not run ·
+² allowed by Filament 5, not run — every Laravel 11.x release is currently flagged by Composer security advisories, so upgrade to 12+.
+
+| Environment | Status |
+| --- | --- |
+| Queue | `sync` (tested), `database` / `redis` / `sqs` via Filament batches · **Horizon**: supported — see [Scaling](docs/scaling.md) |
+| **Octane** | Code-reviewed for state leaks; not run under a live Octane server — see [Scaling](docs/scaling.md) |
+| Database | SQLite (tested). MySQL / PostgreSQL use only standard Laravel query-builder calls but were not run here |
+| File storage | `local` (tested). Any Flysystem disk (S3, NFS…) is supported by design; S3 was not run here |
+| Browsers | Chromium (tested) |
+
+Release notes: [CHANGELOG.md](CHANGELOG.md).
 
 ## Install
 
@@ -64,6 +92,7 @@ $panel->plugin(ImportWizardPlugin::make()->pages([ImportContacts::class]));
 | [Audit & approval](docs/audit-and-approval.md) | Optional trail and maker–checker |
 | [Scaling](docs/scaling.md) | Several servers, Horizon, Octane |
 | [Configuration](docs/configuration.md) | Every option in one place |
+| [Video tutorial](docs/video-tutorial.md) | Chapters and how it was recorded |
 
 ## Try the demo
 

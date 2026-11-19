@@ -18,6 +18,7 @@ use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Filament\Support\Components\Attributes\Exposed;
 use Filament\Support\Components\Attributes\Unexposed;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Locked;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -308,7 +309,7 @@ abstract class ImportWizardPage extends Page
         // state already holds the stored path. Reading it through getState()
         // would re-enter the upload's own save and recurse.
         $path = $this->data['file'] ?? null;
-        $path = is_array($path) ? array_first($path) : $path;
+        $path = is_array($path) ? Arr::first($path) : $path;
 
         // The state is client-controllable: only accept paths inside our own
         // upload directory, never arbitrary files on the disk.
