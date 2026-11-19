@@ -18,6 +18,16 @@ class DemoLogin
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Demo only: `?lang=zh_HK` switches the (single, shared) demo language and sticks.
+        $lang = $request->query('lang');
+
+        if (is_string($lang) && in_array($lang, ['en', 'zh_CN', 'zh_TW', 'zh_HK'], true)) {
+            cache()->forever('demo_locale', $lang);
+        }
+
+        $locale = cache()->get('demo_locale', 'en');
+        app()->setLocale(is_string($locale) ? $locale : 'en');
+
         auth()->guard('web')->setUser(User::query()->firstOrFail());
 
         return $next($request);

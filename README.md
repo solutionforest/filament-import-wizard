@@ -10,22 +10,11 @@ It sits on top of Filament's own `Importer` classes, so **your existing importer
 
 ## Video tutorial
 
-[![Watch the 1-minute tutorial](docs/video/tutorial-preview.gif)](docs/video/tutorial.mp4)
+[![Watch the tutorial](docs/video/tutorial-preview.gif)](docs/video/tutorial.mp4)
 
-▶ **[Watch the tutorial (mp4, 57 s)](docs/video/tutorial.mp4)** — upload an Excel file, map columns with live preview, review
-every row, submit for approval, approve, and read the audit trail. Chapters and how it was recorded: [docs/video-tutorial.md](docs/video-tutorial.md).
-
-## Why use it
-
-- **CSV, XLSX, XLS, ODS** — multi-sheet workbooks, odd encodings and delimiters handled for you.
-- **Check first** — every row is validated with your importer's own rules, with a live preview table and the exact problems, before the import starts.
-- **Smart column mapping** — columns are matched automatically; you only fix what's wrong.
-- **Huge files** — streamed, never loaded into memory; resumable chunked upload bypasses PHP's size limit.
-- **One rules class** for Filament forms *and* imports.
-- **Optional audit trail and approval step** (maker–checker).
-- **Translated** — English, 简体中文, 繁體中文 (TW / HK); add your own locale in minutes.
-- **Stress-tested** — 50,000 and 200,000 rows with flat memory; Review of 50,000 rows in under a second ([results](docs/performance.md)).
-- Multi-panel, multi-server, Horizon and Octane friendly. PHPStan level 10.
+▶ **[Watch the tutorial (mp4, 80 s)](docs/video/tutorial.mp4)** — upload an Excel file, map columns with a live preview, review every row, submit for approval,
+approve and read the audit trail; then a **50,000-row file** (chunked upload, reviewed in about two seconds) and the interface in **Hong Kong Traditional Chinese**.
+Chapters and how it was recorded: [docs/video-tutorial.md](docs/video-tutorial.md).
 
 ## Supported versions
 

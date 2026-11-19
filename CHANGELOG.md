@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.2
+- Review: each request now keeps validating slices for up to a second (`getReviewTimeBudget()`), so a 50,000-row file is reviewed in one or two requests instead of one poll per slice (~1.9 s end to end in a browser).
+- Video tutorial re-recorded (80 s): adds the 50,000-row chunked upload + instant review and the Hong Kong Traditional Chinese interface; demo language switch `?lang=`.
+
 ## 0.8.1
 - Fast validation path: verified far more thoroughly — differential fuzz vs Laravel (random rule sets × hostile values; ~1.6M comparisons in the large run), exhaustive single/pair rule × value tables, e-mail and numeric boundary tables, whole-pipeline (messages, attributes, casts) and real-import comparisons, and a 27-mutant mutation test (`composer fuzz`, `composer mutate`; docs/testing.md).
 - **Fixed three correctness bugs found by it:** an empty array passed `required`; some long e-mail addresses were accepted that Laravel rejects; `INF` / exponent / over-precise numbers with `numeric` + `min`/`max` passed where Laravel throws.

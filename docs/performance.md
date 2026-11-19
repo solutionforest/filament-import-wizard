@@ -57,7 +57,7 @@ What it shows:
 - **Memory is flat.** Quadrupling the file changes the peak by about a megabyte: nothing is loaded whole; rows stream through generators and slices.
 - **Time is linear** — about 77,000 rows/s for Review and about 5,800 rows/s for the full import in this setup; the import is dominated by the importer's own
   work and the database writes, not by the wizard.
-- **Review is interactive for any size.** It validates 2,000 rows per request (~25 ms each here), so a 50,000-row file is 25 short polls and finishes in well under a second,
+- **Review is interactive for any size.** It validates 2,000 rows per request (~25 ms each here), and a request keeps slicing for up to a second, so a 50,000-row file is reviewed in one or two requests (about 1.9 s end to end in a browser in the tutorial video),
   never one long request.
 - **Correctness holds under load** — exact invalid / duplicate / imported / failed counts at 50k and 200k rows.
 

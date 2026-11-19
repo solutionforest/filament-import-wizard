@@ -509,44 +509,58 @@ abstract class ImportWizardPage extends Page
             fast: $this->getPlugin()->usesFastValidation(),
         );
 
-        $perRequest = $this->getRowsPerReviewRequest();
-        $generator = $source->read($source->getHeaders(), $this->reviewOffset, $perRequest);
-        $rows = iterator_to_array($generator, false);
-        $count = count($rows);
-        $results = $validator->validateMany($rows, $this->reviewedRows + 1);
+        // Keep slicing for up to a second per request: a 50,000-row file is then one or two round
+        // trips instead of one poll per slice, while the progress bar still moves on every poll.
+        $deadline = microtime(true) + $this->getReviewTimeBudget();
 
-        foreach ($rows as $index => $row) {
-            $errors = $results[$index];
-            $rowNumber = $this->reviewedRows + $index + 1;
+        do {
+            $perRequest = $this->getRowsPerReviewRequest();
+            $generator = $source->read($source->getHeaders(), $this->reviewOffset, $perRequest);
+            $rows = iterator_to_array($generator, false);
+            $count = count($rows);
+            $results = $validator->validateMany($rows, $this->reviewedRows + 1);
 
-            if ($rowNumber <= $this->getPreviewLimit()) {
-                $this->previewRows[] = ['row' => $rowNumber, 'values' => $this->mapRow($row, $this->getColumnMap()), 'errors' => $errors];
+            foreach ($rows as $index => $row) {
+                $errors = $results[$index];
+                $rowNumber = $this->reviewedRows + $index + 1;
+
+                if ($rowNumber <= $this->getPreviewLimit()) {
+                    $this->previewRows[] = ['row' => $rowNumber, 'values' => $this->mapRow($row, $this->getColumnMap()), 'errors' => $errors];
+                }
+
+                if ($errors === []) {
+                    continue;
+                }
+
+                $this->invalidRows++;
+
+                foreach (array_keys($errors) as $column) {
+                    $this->errorsByColumn[$column] = ($this->errorsByColumn[$column] ?? 0) + 1;
+                }
+
+                if (count($this->errorRows) < $this->getMaxCollectedErrors()) {
+                    $this->errorRows[] = ['row' => $rowNumber, 'errors' => $errors];
+                }
             }
 
-            if ($errors === []) {
-                continue;
-            }
-
-            $this->invalidRows++;
-
-            foreach (array_keys($errors) as $column) {
-                $this->errorsByColumn[$column] = ($this->errorsByColumn[$column] ?? 0) + 1;
-            }
-
-            if (count($this->errorRows) < $this->getMaxCollectedErrors()) {
-                $this->errorRows[] = ['row' => $rowNumber, 'errors' => $errors];
-            }
-        }
-
-        $this->reviewOffset = $generator->getReturn();
-        $this->reviewedRows += $count;
-        $this->reviewFinished = $count < $perRequest || $this->reviewedRows >= $this->totalRows;
+            $this->reviewOffset = $generator->getReturn();
+            $this->reviewedRows += $count;
+            $this->reviewFinished = $count < $perRequest || $this->reviewedRows >= $this->totalRows;
+        } while (! $this->reviewFinished && microtime(true) < $deadline);
 
         if ($this->reviewFinished) {
             $validator->finish($this->reviewToken);
 
             $this->finishReview();
         }
+    }
+
+    /**
+     * Seconds one Review request may keep validating slices before answering.
+     */
+    protected function getReviewTimeBudget(): float
+    {
+        return 1.0;
     }
 
     protected function finishReview(): void
